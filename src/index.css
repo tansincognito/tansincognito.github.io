@@ -9,17 +9,30 @@
 
 @layer base {
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--background); color: var(--foreground); -webkit-font-smoothing: antialiased; }
+  body { background: var(--background); color: var(--foreground); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
   a { color: inherit; text-decoration: none; }
 }
 
-/* Responsive project grid */
-.project-grid {
-  grid-template-columns: repeat(3, 1fr);
+/* Hero: name/subheading on the left, projects on the right */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  align-items: start;
 }
-@media (max-width: 640px) {
+@media (max-width: 860px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}
+
+/* Projects: 2 columns x 3 rows */
+.project-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (max-width: 420px) {
   .project-grid {
-    grid-template-columns: repeat(2, 1fr);
     gap: 10px !important;
   }
 }

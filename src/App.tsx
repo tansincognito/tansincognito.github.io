@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import {
   Github,
   Twitter,
@@ -10,12 +10,10 @@ import {
   Zap,
   BarChart2,
   Layers,
-  Cpu,
-  Palette,
-  Rocket,
+  Code2,
+  Plus,
   X,
 } from "lucide-react";
-import { SiPython } from "react-icons/si";
 
 /* ─── types ─────────────────────────────────────────────── */
 
@@ -37,45 +35,39 @@ interface Project {
 
 type PanelKey = "tanishaa" | "sinha" | null;
 
-/* ─── icon wrappers ─────────────────────────────────────── */
-
-function PythonLogoIcon({ size, color }: { size?: number; color?: string }) {
-  return <SiPython size={size} color={color} />;
-}
-
 /* ─── data ─────────────────────────────────────────────── */
 
 const projects: Project[] = [
   {
     id: "python-project",
-    name: "Python Project",           // TODO: replace with project name
-    tagline: "Coming soon",           // TODO: replace
-    description: "Description coming soon.", // TODO: replace
+    name: "Codescope",           // TODO: replace with project name
+    tagline: "Analyze any python repo",           // TODO: replace
+    description: "Chrome extension to enable first time users understand python based repositories", // TODO: replace
     stack: ["Python"],                // TODO: replace
     gradient: { from: "#4facfe", to: "#ffd32a" },
-    Icon: PythonLogoIcon,
-    github: "#",                      // TODO: replace
+    Icon: Code2,
+    github: "#https://github.com/tan-sinha/Codescope",                      // TODO: replace
     live: "#",                        // TODO: replace
     active: true,
   },
   {
     id: "briefcase-project",
-    name: "Briefcase Project",        // TODO: replace with project name
-    tagline: "Coming soon",           // TODO: replace
-    description: "Description coming soon.", // TODO: replace
-    stack: ["TBD"],                   // TODO: replace
+    name: "TripSync",        // TODO: replace with project name
+    tagline: "Plan in minutes instead of weeks/months",           // TODO: replace
+    description: "A web app to enable trip planning easier for groups and individuals", // TODO: replace
+    stack: ["TB"],                   // TODO: replace
     gradient: { from: "#11998e", to: "#38ef7d" },
     Icon: Briefcase,
-    github: "#",                      // TODO: replace
+    github: "https://github.com/tan-sinha/TripSynce",                      // TODO: replace
     live: "#",                        // TODO: replace
     active: true,
   },
   {
     id: "inside-the-machine",
     name: "Inside the Machine",
-    tagline: "Tech & consumer behaviour",
+    tagline: "Visualise laptop behind-the-scenes",
     description:
-      "A personal exploration of how technology shapes the way consumers think, decide, and live — peeling back the interface to understand what's really going on underneath.",
+      "3-D visualisation of laptops dissembler to understand workflows between hardware triggered by processes.",
     stack: ["React", "Next.js", "Vercel"],
     gradient: { from: "#f953c6", to: "#b91d73" },
     Icon: Laptop,
@@ -86,15 +78,19 @@ const projects: Project[] = [
   { id: "p4", name: "Coming Soon", tagline: "", description: "", stack: [], gradient: { from: "#43e97b", to: "#38f9d7" }, Icon: Zap,      github: "#", live: "#", active: false },
   { id: "p5", name: "Coming Soon", tagline: "", description: "", stack: [], gradient: { from: "#667eea", to: "#764ba2" }, Icon: BarChart2, github: "#", live: "#", active: false },
   { id: "p6", name: "Coming Soon", tagline: "", description: "", stack: [], gradient: { from: "#f093fb", to: "#f5576c" }, Icon: Layers,   github: "#", live: "#", active: false },
-  { id: "p7", name: "Coming Soon", tagline: "", description: "", stack: [], gradient: { from: "#4776e6", to: "#8e54e9" }, Icon: Cpu,      github: "#", live: "#", active: false },
-  { id: "p8", name: "Coming Soon", tagline: "", description: "", stack: [], gradient: { from: "#fe6b8b", to: "#ff8e53" }, Icon: Palette,  github: "#", live: "#", active: false },
-  { id: "p9", name: "Coming Soon", tagline: "", description: "", stack: [], gradient: { from: "#0fd850", to: "#f9f047" }, Icon: Rocket,   github: "#", live: "#", active: false },
+];
+
+const blogArticles = [
+  // TODO: replace title + excerpt with real post content
+  { id: "post-1", title: "Why most B2B onboarding fails in the first five minutes", excerpt: "Placeholder excerpt — swap in the real opening paragraph when the post is ready." },
+  { id: "post-2", title: "Building a Chrome extension nobody asked for", excerpt: "Placeholder excerpt — swap in the real opening paragraph when the post is ready." },
+  { id: "post-3", title: "What travel-planning software gets wrong", excerpt: "Placeholder excerpt — swap in the real opening paragraph when the post is ready." },
 ];
 
 const socials = [
-  { icon: Github,   label: "GitHub",   href: "#" },
+  { icon: Github,   label: "GitHub",   href: "https://github.com/tan-sinha" },
   { icon: Twitter,  label: "Twitter",  href: "#" },
-  { icon: Linkedin, label: "LinkedIn", href: "#" },
+  { icon: Linkedin, label: "LinkedIn", href: "https://www.linkedin.com/in/tansinha/" },
   { icon: Mail,     label: "Email",    href: "mailto:sinhatan2002@gmail.com" },
 ];
 
@@ -107,21 +103,21 @@ const panelContent: Record<
   { title: string; sections: { heading: string; body: string }[] }
 > = {
   tanishaa: {
-    title: "hi, i'm tanishaa.",
+    title: "Hi, I'm Tanishaa.",
     sections: [
-      { heading: "who i am",        body: "Someone who thinks too much about why people click on things. Consumer by nature, curious by choice." },
-      { heading: "why i'm here",    body: "To make sense of the overlap between products and people — and to have somewhere to put those thoughts." },
-      { heading: "when i'm offline", body: "Reading, overanalyzing films, building side projects, and probably listening to something lo-fi." },
-      { heading: "into",             body: "Consumer psychology · Product thinking · Behaviour design · Music · Cinema" },
+      { heading: "Who I am",        body: "Someone who thinks too much about why people click on things. Consumer by nature, curious by choice." },
+      { heading: "why i'm here",    body: "To explore and showcase ideas which I wanted to bring to life in some capacity." },
+      { heading: "when i'm offline", body: "Reading, playing TT, travelling, and honestly just talking to people from different walks of life." },
+      { heading: "into",             body: "Consumer psychology · Workflow Automation· Travel · Music " },
     ],
   },
   sinha: {
     title: "Sinha.",
     sections: [
-      { heading: "studying",  body: "Focused on the intersection of business, technology, and consumer behaviour." }, // TODO: add degree / school
-      { heading: "building",  body: "Inside the Machine — writing through the ways tech shapes how we live and decide." },
-      { heading: "areas",     body: "Product thinking · Consumer tech · Behaviour research · Writing in public" },
-      { heading: "open to",   body: "Internships, collaborations, and good conversations." },
+      { heading: "Studying",  body: "Focused on developing in three domains: people , tech and business." }, // TODO: add degree / school
+      { heading: "Building",  body: "Side projects tinkering with my high IQ assistant" },
+      { heading: "Areas",     body: "Product thinking · Consumer tech · Writing in public" },
+      { heading: "Open To",   body: "Opportunities and good comversations." },
     ],
   },
 };
@@ -276,13 +272,40 @@ function InfoPanel({ type, onClose }: { type: PanelKey; onClose: () => void }) {
   );
 }
 
+/* ─── TracedIcon ────────────────────────────────────────── */
+/* Overlays a black copy of the icon whose stroke draws itself in on hover,
+   using pathLength normalization so the dash animation works uniformly
+   across an icon's mixed path/circle/line children. */
+
+function TracedIcon({ Icon, size, hovered }: { Icon: IconComponent; size: number; hovered: boolean }) {
+  const wrapRef = useRef<HTMLSpanElement>(null);
+
+  useLayoutEffect(() => {
+    const svg = wrapRef.current?.querySelector("svg");
+    if (!svg) return;
+    const shapes = svg.querySelectorAll("path, line, circle, polyline, rect, ellipse");
+    shapes.forEach((el) => {
+      el.setAttribute("pathLength", "100");
+      const style = (el as unknown as SVGElement).style;
+      style.strokeDasharray = "100";
+      style.transition = "stroke-dashoffset 1.4s cubic-bezier(.22,1,.36,1)";
+      style.strokeDashoffset = hovered ? "0" : "100";
+    });
+  }, [hovered]);
+
+  return (
+    <span ref={wrapRef} style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Icon size={size} color="#000" strokeWidth={1.8} />
+    </span>
+  );
+}
+
 /* ─── ProjectCard ───────────────────────────────────────── */
 
 function ProjectCard({ project, index }: { project: Project; index: number }) {
   const [hovered, setHovered] = useState(false);
   const { ref, visible } = useReveal();
   const isMobile = useIsMobile();
-  const col = index % 3;
   const ProjectIcon = project.Icon;
 
   return (
@@ -307,69 +330,152 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         alignItems: "center",
         gap: 12,
       }}>
-        <div style={{
-          width: 82,
-          height: 82,
-          borderRadius: 22,
-          background: `linear-gradient(135deg, ${project.gradient.from}, ${project.gradient.to})`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          boxShadow: hovered ? `0 14px 40px ${project.gradient.from}55` : `0 6px 20px ${project.gradient.from}38`,
-          transform: hovered ? "scale(1.16)" : "scale(1)",
-          transition: "transform 0.45s cubic-bezier(.34,1.56,.64,1), box-shadow 0.3s ease",
-          flexShrink: 0,
-        }}>
-          <ProjectIcon size={34} color="rgba(255,255,255,0.92)" />
+        {/* Icon anchor — stays fixed size/position so the popup gap never moves */}
+        <div style={{ width: 82, height: 82, position: "relative", flexShrink: 0 }}>
+          <div style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transform: hovered ? "scale(1.1)" : "scale(1)",
+            transition: "transform 0.4s cubic-bezier(.34,1.56,.64,1)",
+          }}>
+            <ProjectIcon size={46} color={`url(#icon-grad-${project.id})`} strokeWidth={1.8} />
+            <TracedIcon Icon={ProjectIcon} size={46} hovered={hovered} />
+          </div>
+
+          {/* Hover popup — desktop only, slides out from the icon's right edge */}
+          {project.active && !isMobile && (
+            <div style={{
+              position: "absolute",
+              top: "50%",
+              left: "calc(100% + 4px)",
+              zIndex: 50,
+              width: 210,
+              transform: hovered ? "translateY(-50%) translateX(0)" : "translateY(-50%) translateX(-14px)",
+              opacity: hovered ? 1 : 0,
+              pointerEvents: hovered ? "auto" : "none",
+              transition: "opacity 0.3s ease, transform 0.45s cubic-bezier(.22,1,.36,1)",
+              background: "rgba(255,255,255,0.92)",
+              backdropFilter: "blur(28px)",
+              WebkitBackdropFilter: "blur(28px)",
+              border: "1px solid rgba(255,255,255,0.6)",
+              borderRadius: 20,
+              overflow: "hidden",
+              boxShadow: "0 12px 48px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.95)",
+            }}>
+              {/* Content */}
+              <div style={{ padding: "7px 8px 7px" }}>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", color: "#555", lineHeight: 1.65, marginBottom: 12 }}>{project.description}</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 14 }}>
+                  {project.stack.map((t) => (
+                    <span key={t} style={{ fontFamily: "'DM Mono', monospace", fontSize: "10px", color: project.gradient.from, background: `${project.gradient.from}1c`, padding: "2px 8px", borderRadius: 999, fontWeight: 500 }}>{t}</span>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 14 }}>
+                  <a href={project.github} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "Inter, sans-serif", fontSize: "11px", color: "#222", fontWeight: 500 }}>
+                    <Github size={12} strokeWidth={2} /> GitHub
+                  </a>
+                  <a href={project.live} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "Inter, sans-serif", fontSize: "11px", color: project.gradient.from, fontWeight: 600 }}>
+                    <ArrowUpRight size={12} strokeWidth={2} /> Live
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-        <span style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", fontWeight: 600, color: project.active ? "#222" : "#bbb", textAlign: "center", lineHeight: 1.3 }}>
+        <span style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", fontWeight: 600, color: project.active ? "#222" : "#bbb", textAlign: "center", lineHeight: 1.3 }}>
           {project.name}
         </span>
       </div>
+    </div>
+  );
+}
 
-      {/* Hover popup — desktop only */}
-      {project.active && !isMobile && (
-        <div style={{
-          position: "absolute",
-          top: "50%",
-          zIndex: 50,
-          width: 210,
-          ...(col === 2 ? { right: "calc(100% + 12px)" } : { left: "calc(100% + 12px)" }),
-          transform: hovered
-            ? "translateY(-50%) translateX(0)"
-            : col === 2
-              ? "translateY(-50%) translateX(10px)"
-              : "translateY(-50%) translateX(-10px)",
-          opacity: hovered ? 1 : 0,
-          pointerEvents: hovered ? "auto" : "none",
-          transition: "opacity 0.22s ease, transform 0.32s cubic-bezier(.22,1,.36,1)",
-          background: "rgba(255,255,255,0.92)",
-          backdropFilter: "blur(28px)",
-          WebkitBackdropFilter: "blur(28px)",
-          border: "1px solid rgba(255,255,255,0.6)",
-          borderRadius: 20,
-          overflow: "hidden",
-          boxShadow: "0 12px 48px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.95)",
-        }}>
-          {/* Content */}
-          <div style={{ padding: "7px 8px 7px" }}>
-            <p style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", color: "#555", lineHeight: 1.65, marginBottom: 12 }}>{project.description}</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 14 }}>
-              {project.stack.map((t) => (
-                <span key={t} style={{ fontFamily: "'DM Mono', monospace", fontSize: "10px", color: project.gradient.from, background: `${project.gradient.from}1c`, padding: "2px 8px", borderRadius: 999, fontWeight: 500 }}>{t}</span>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: 14 }}>
-              <a href={project.github} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "Inter, sans-serif", fontSize: "11px", color: "#222", fontWeight: 500 }}>
-                <Github size={12} strokeWidth={2} /> GitHub
-              </a>
-              <a href={project.live} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "Inter, sans-serif", fontSize: "11px", color: project.gradient.from, fontWeight: 600 }}>
-                <ArrowUpRight size={12} strokeWidth={2} /> Live
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
+/* ─── TypingReveal ──────────────────────────────────────── */
+/* Splits text into words and reveals them in sequence — sliding up + fading
+   in with a staggered delay — starting automatically once the page has loaded. */
+
+function TypingReveal({ text }: { text: string }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 650);
+    return () => clearTimeout(t);
+  }, []);
+  const words = text.split(" ");
+  return (
+    <div style={{
+      fontFamily: "Inter, sans-serif",
+      fontSize: "clamp(14px, 2.1vw, 19px)",
+      fontWeight: 400,
+      color: "#111",
+      maxWidth: "560px",
+      lineHeight: 1.55,
+      marginTop: "32px",
+    }}>
+      {words.map((w, i) => (
+        <span
+          key={i}
+          style={{
+            display: "inline-block",
+            opacity: visible ? 1 : 0,
+            transform: visible ? "translateY(0)" : "translateY(14px)",
+            transition: `opacity 0.5s ease ${i * 45}ms, transform 0.5s cubic-bezier(.22,1,.36,1) ${i * 45}ms`,
+          }}
+        >
+          {w}&nbsp;
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/* ─── BlogRow ───────────────────────────────────────────── */
+/* Accordion row — click the "+" (rotates into an "×") to expand/collapse the excerpt. */
+
+function BlogRow({ title, excerpt }: { title: string; excerpt: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ borderBottom: "1px solid #f0f0f0", paddingBottom: "14px" }}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "16px",
+          width: "100%",
+          background: "none",
+          border: "none",
+          padding: 0,
+          cursor: "pointer",
+          textAlign: "left",
+          font: "inherit",
+        }}
+      >
+        <span style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(15px, 1.7vw, 18px)", fontWeight: 500, color: "#222", lineHeight: 1.4 }}>{title}</span>
+        <Plus
+          size={18}
+          strokeWidth={1.8}
+          color="#aaa"
+          style={{
+            flexShrink: 0,
+            transform: open ? "rotate(45deg)" : "rotate(0deg)",
+            transition: "transform 0.3s cubic-bezier(.22,1,.36,1)",
+          }}
+        />
+      </button>
+      <div style={{
+        maxHeight: open ? 80 : 0,
+        opacity: open ? 1 : 0,
+        marginTop: open ? "10px" : "0px",
+        overflow: "hidden",
+        transition: "max-height 0.35s cubic-bezier(.22,1,.36,1), opacity 0.3s ease, margin-top 0.35s ease",
+      }}>
+        <p style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", color: "#999", lineHeight: 1.6 }}>{excerpt}</p>
+      </div>
     </div>
   );
 }
@@ -428,70 +534,82 @@ export default function App() {
       {/* ── Nav ── */}
       <nav style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
+        display: "flex", alignItems: "center", justifyContent: "flex-end",
         padding: "16px 24px",
         background: "rgba(255,255,255,0.88)",
         backdropFilter: "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",
         borderBottom: "1px solid rgba(0,0,0,0.05)",
       }}>
-        <span style={{ fontFamily: "Inter, sans-serif", fontSize: "18px", fontWeight: 600, color: "#111", letterSpacing: "0.01em", whiteSpace: "nowrap" }}>
-          Tanishaa Sinha
-        </span>
         <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
           {socials.map(({ icon: Icon, label, href }) => (
             <a key={label} href={href} title={label} className="nav-icon">
-              <Icon size={20} strokeWidth={1.8} />
+              <Icon size={26} strokeWidth={1.8} />
             </a>
           ))}
         </div>
       </nav>
 
-      {/* ── Hero ── */}
-      <section style={{ paddingTop: "120px", paddingBottom: "64px", paddingLeft: "24px", paddingRight: "24px", width: "100%" }}>
-        <div style={{ animation: "heroIn 0.8s cubic-bezier(.22,1,.36,1) forwards" }}>
-          <h1 style={{
-            fontFamily: "'Chakra Petch', sans-serif",
-            fontWeight: 700,
-            fontSize: "clamp(46px, 8.5vw, 103px)",
-            lineHeight: 0.95,
-            color: "#111",
-            letterSpacing: "-0.02em",
-            marginBottom: "28px",
-          }}>
-            <span className="name-word" onClick={() => setPanel("tanishaa")} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && setPanel("tanishaa")}>
-              Tanishaa
-            </span>
-            {" "}
-            <span className="name-word" onClick={() => setPanel("sinha")} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && setPanel("sinha")}>
-              Sinha
-            </span>
-          </h1>
-          <p style={{
-            fontFamily: "Inter, sans-serif",
-            fontSize: "clamp(18px, 2.6vw, 24px)",
-            fontWeight: 400,
-            color: "#888",
-            maxWidth: "560px",
-            lineHeight: 1.55,
-          }}>
-            A consumer trying to understand consumers — while exploring the black box known as technology.
-          </p>
-        </div>
-      </section>
+      {/* ── Hero + Projects ── */}
+      <section style={{ paddingTop: "120px", paddingBottom: "80px", paddingLeft: "24px", paddingRight: "24px", width: "100%" }}>
+        <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
+          <defs>
+            {projects.map((p) => (
+              <linearGradient key={p.id} id={`icon-grad-${p.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor={p.gradient.from} />
+                <stop offset="100%" stopColor={p.gradient.to} />
+              </linearGradient>
+            ))}
+          </defs>
+        </svg>
+        <div className="hero-grid">
+          {/* LEFT — name, subheading, dynamic reveal text */}
+          <div style={{ animation: "heroIn 0.8s cubic-bezier(.22,1,.36,1) forwards" }}>
+            <h1 style={{
+              fontFamily: "'Chakra Petch', sans-serif",
+              fontWeight: 700,
+              fontSize: "clamp(37px, 6.8vw, 82px)",
+              lineHeight: 0.95,
+              color: "#111",
+              letterSpacing: "-0.02em",
+              marginBottom: "28px",
+            }}>
+              <span className="name-word" onClick={() => setPanel("tanishaa")} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && setPanel("tanishaa")}>
+                Tanishaa
+              </span>
+              {" "}
+              <span className="name-word" onClick={() => setPanel("sinha")} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && setPanel("sinha")}>
+                Sinha
+              </span>
+            </h1>
+            <p style={{
+              fontFamily: "Inter, sans-serif",
+              fontSize: "clamp(14px, 2.1vw, 19px)",
+              fontWeight: 400,
+              color: "#888",
+              maxWidth: "560px",
+              lineHeight: 1.55,
+            }}>
+              A consumer trying to understand consumers — while exploring the black box known as technology.
+            </p>
+            {/* TODO: paragraph text is a placeholder, to be replaced */}
+            <TypingReveal text="More on how I think, build, and take things apart — written up right here soon." />
+          </div>
 
-      {/* ── Projects ── */}
-      <section style={{ padding: "0 24px 80px", width: "100%" }}>
-        <RevealSection>
-          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "16px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
-            Projects
-          </p>
-        </RevealSection>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}
-          className="project-grid">
-          {projects.map((p, i) => (
-            <ProjectCard key={p.id} project={p} index={i} />
-          ))}
+          {/* RIGHT — projects, 2 × 3 */}
+          <div style={{ marginTop: "24px" }}>
+            <RevealSection>
+              <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "16px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
+                Projects
+              </p>
+            </RevealSection>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}
+              className="project-grid">
+              {projects.map((p, i) => (
+                <ProjectCard key={p.id} project={p} index={i} />
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -511,15 +629,8 @@ export default function App() {
               </p>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {[
-                { label: "Projects shipped", value: "3" },
-                { label: "GitHub",           value: "tan-sinha" },
-                { label: "Status",           value: "Building" },
-              ].map((s) => (
-                <div key={s.label} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", borderBottom: "1px solid #f0f0f0", paddingBottom: "14px" }}>
-                  <span style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", color: "#aaa" }}>{s.label}</span>
-                  <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "18px", fontWeight: 700, color: "#111" }}>{s.value}</span>
-                </div>
+              {blogArticles.map((post) => (
+                <BlogRow key={post.id} title={post.title} excerpt={post.excerpt} />
               ))}
             </div>
           </div>
@@ -535,7 +646,7 @@ export default function App() {
           <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
             {socials.map(({ icon: Icon, label, href }) => (
               <a key={label} href={href} title={label} className="nav-icon" style={{ color: "#ccc" }}>
-                <Icon size={18} strokeWidth={1.8} />
+                <Icon size={23} strokeWidth={1.8} />
               </a>
             ))}
           </div>
