@@ -11,8 +11,6 @@ import {
   BarChart2,
   Layers,
   Code2,
-  Plus,
-  X,
 } from "lucide-react";
 
 /* ─── types ─────────────────────────────────────────────── */
@@ -32,8 +30,6 @@ interface Project {
   live: string;
   active: boolean;
 }
-
-type PanelKey = "tanishaa" | "sinha" | null;
 
 /* ─── data ─────────────────────────────────────────────── */
 
@@ -81,10 +77,10 @@ const projects: Project[] = [
 ];
 
 const blogArticles = [
-  // TODO: replace title + excerpt with real post content
-  { id: "post-1", title: "Why most B2B onboarding fails in the first five minutes", excerpt: "Placeholder excerpt — swap in the real opening paragraph when the post is ready." },
-  { id: "post-2", title: "Building a Chrome extension nobody asked for", excerpt: "Placeholder excerpt — swap in the real opening paragraph when the post is ready." },
-  { id: "post-3", title: "What travel-planning software gets wrong", excerpt: "Placeholder excerpt — swap in the real opening paragraph when the post is ready." },
+  // TODO: replace title + excerpt + badge with real post content
+  { id: "post-1", title: "Why most B2B onboarding fails in the first five minutes", excerpt: "Placeholder excerpt — swap in the real opening paragraph when the post is ready.", badge: "Product" },
+  { id: "post-2", title: "Building a Chrome extension nobody asked for", excerpt: "Placeholder excerpt — swap in the real opening paragraph when the post is ready.", badge: "Build" },
+  { id: "post-3", title: "What travel-planning software gets wrong", excerpt: "Placeholder excerpt — swap in the real opening paragraph when the post is ready.", badge: "Notes" },
 ];
 
 const socials = [
@@ -152,123 +148,126 @@ function useIsMobile() {
   return mobile;
 }
 
-/* ─── InfoPanel ─────────────────────────────────────────── */
+/* ─── ScrambleText ──────────────────────────────────────── */
+/* Hovering a phrase scrambles it through random characters before
+   resolving into a different string (a snippet of its body text), then
+   scrambles back to the original heading on mouse-leave. */
 
-function InfoPanel({ type, onClose }: { type: PanelKey; onClose: () => void }) {
-  const open = type !== null;
-  const isMobile = useIsMobile();
+const SCRAMBLE_CHARS = "!<>-_\\/[]{}—=+*^?#";
 
-  const lastDataRef = useRef<(typeof panelContent)["tanishaa"] | null>(null);
-  if (type) lastDataRef.current = panelContent[type];
-  const data = lastDataRef.current;
+function ScrambleText({ text, hoverText, style }: { text: string; hoverText: string; style: React.CSSProperties }) {
+  const [display, setDisplay] = useState(text);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const fn = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", fn);
-    return () => window.removeEventListener("keydown", fn);
-  }, [open, onClose]);
+  const scrambleTo = (target: string) => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    let iteration = 0;
+    intervalRef.current = setInterval(() => {
+      setDisplay(
+        target
+          .split("")
+          .map((ch, i) => (i < iteration ? ch : SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)]))
+          .join("")
+      );
+      iteration += target.length / 14;
+      if (iteration >= target.length) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        setDisplay(target);
+      }
+    }, 30);
+  };
 
-  useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [open]);
+  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        aria-hidden="true"
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(0,0,0,0.07)",
-          backdropFilter: open ? "blur(3px)" : "none",
-          WebkitBackdropFilter: open ? "blur(3px)" : "none",
-          opacity: open ? 1 : 0,
-          pointerEvents: open ? "auto" : "none",
-          transition: "opacity 0.3s ease",
-          zIndex: 100,
-        }}
-      />
+    <span
+      style={style}
+      onMouseEnter={() => scrambleTo(hoverText)}
+      onMouseLeave={() => scrambleTo(text)}
+    >
+      {display}
+    </span>
+  );
+}
 
-      {/* Panel */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        style={{
-          position: "fixed",
-          zIndex: 110,
-          background: "rgba(255,255,255,0.96)",
-          backdropFilter: "blur(32px)",
-          WebkitBackdropFilter: "blur(32px)",
-          overflowY: "auto",
-          transition: "transform 0.4s cubic-bezier(.22,1,.36,1)",
-          ...(isMobile
-            ? {
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: "72vh",
-                maxHeight: "72vh",
-                borderRadius: "22px 22px 0 0",
-                borderTop: `3px solid ${TERRACOTTA}`,
-                transform: open ? "translateY(0)" : "translateY(100%)",
-                padding: "32px 24px 48px",
-              }
-            : {
-                top: 0,
-                right: 0,
-                bottom: 0,
-                width: "360px",
-                borderLeft: `3px solid ${TERRACOTTA}`,
-                transform: open ? "translateX(0)" : "translateX(100%)",
-                padding: "56px 40px 48px",
-              }),
-        }}
-      >
-        <button
-          onClick={onClose}
-          aria-label="Close panel"
-          style={{
-            position: "absolute",
-            top: isMobile ? 18 : 24,
-            right: isMobile ? 20 : 24,
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "#bbb",
-            padding: 6,
-            display: "flex",
-            alignItems: "center",
-            lineHeight: 1,
-          }}
-        >
-          <X size={18} strokeWidth={2} />
-        </button>
+/* ─── PhraseScatter ─────────────────────────────────────── */
+/* A static, artistic scatter of the section headings from both people's
+   content — bold, oversized, mixed colors, spread horizontally along a
+   shared baseline. Hovering a phrase scrambles it into a snippet of its
+   body text via ScrambleText. */
 
-        {data && (
-          <>
-            <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 700, color: "#111", lineHeight: 1.1, marginBottom: "40px" }}>
-              {data.title}
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
-              {data.sections.map((s) => (
-                <div key={s.heading}>
-                  <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "9px", fontWeight: 700, color: TERRACOTTA, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: "7px" }}>
-                    {s.heading}
-                  </p>
-                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", color: "#444", lineHeight: 1.72 }}>
-                    {s.body}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-    </>
+const EXTRA_PHRASES = [
+  { heading: "what i've built", body: "A chrome extension, a trip planner, and a laptop dissected — with more in the pipeline." },
+  { heading: "where i'm headed", body: "Toward roles where product thinking, curiosity, and shipping fast all matter." },
+];
+
+const OMITTED_HEADINGS = new Set(["into", "Studying", "Building"]);
+
+/* Fixed set of size/color/weight/style variants — bright, mixed palette —
+   so the "scattered" look is consistent across renders instead of relying
+   on Math.random(). Libre Baskerville only ships 400/700 (and italic), so
+   weight variety comes from alternating those two plus italics. */
+const PHRASE_STYLES = [
+  { fontSize: "42px", color: "#E8437E", fontWeight: 700, fontStyle: "normal" },
+  { fontSize: "24px", color: "#111", fontWeight: 400, fontStyle: "italic" },
+  { fontSize: "54px", color: "#FF6B35", fontWeight: 700, fontStyle: "normal" },
+  { fontSize: "28px", color: "#2F6FED", fontWeight: 700, fontStyle: "italic" },
+  { fontSize: "38px", color: TERRACOTTA, fontWeight: 700, fontStyle: "normal" },
+  { fontSize: "26px", color: "#1FAA59", fontWeight: 400, fontStyle: "italic" },
+  { fontSize: "48px", color: "#8B5CF6", fontWeight: 700, fontStyle: "normal" },
+];
+
+function truncate(body: string, max = 22) {
+  return body.length > max ? `${body.slice(0, max).trim()}…` : body;
+}
+
+/* Explicit (top%, left-or-right%) per phrase — a real 2-D scatter across
+   the canvas rather than a packed flex-wrap line. Alternating between
+   left- and right-anchoring (instead of always left%) is what actually
+   gets phrases touching both edges evenly, since a right-anchored phrase's
+   own width can't push it past the edge the way a left% anchor risks. */
+const PHRASE_POSITIONS: { top: string; left?: string; right?: string; transform?: string }[] = [
+  { top: "0%", left: "0%" },
+  { top: "8%", right: "0%" },
+  { top: "24%", left: "6%" },
+  { top: "36%", right: "4%" },
+  { top: "54%", left: "0%" },
+  { top: "68%", right: "6%" },
+  { top: "42%", left: "50%", transform: "translateX(-50%)" },
+];
+
+function PhraseScatter() {
+  const phrases = [...panelContent.tanishaa.sections, ...panelContent.sinha.sections, ...EXTRA_PHRASES]
+    .filter((s) => !OMITTED_HEADINGS.has(s.heading));
+  return (
+    <div style={{ position: "relative", minHeight: "360px" }}>
+      {phrases.map((s, i) => {
+        const v = PHRASE_STYLES[i % PHRASE_STYLES.length];
+        const p = PHRASE_POSITIONS[i % PHRASE_POSITIONS.length];
+        return (
+          <ScrambleText
+            key={s.heading}
+            text={s.heading}
+            hoverText={truncate(s.body)}
+            style={{
+              position: "absolute",
+              top: p.top,
+              left: p.left,
+              right: p.right,
+              transform: p.transform,
+              fontFamily: "'Libre Baskerville', serif",
+              fontSize: v.fontSize,
+              fontWeight: v.fontWeight,
+              fontStyle: v.fontStyle,
+              color: v.color,
+              lineHeight: 1.05,
+              cursor: "default",
+              whiteSpace: "nowrap",
+            }}
+          />
+        );
+      })}
+    </div>
   );
 }
 
@@ -393,88 +392,122 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
   );
 }
 
-/* ─── TypingReveal ──────────────────────────────────────── */
-/* Splits text into words and reveals them in sequence — sliding up + fading
-   in with a staggered delay — starting automatically once the page has loaded. */
+/* ─── Typewriter ────────────────────────────────────────── */
+/* One continuous, uniformly-styled block of text typed out character by
+   character — like watching someone type a long document. Lives in a
+   fixed-height panel that fills the remaining space next to the project
+   grid; as the text grows past the panel's height, it smooth-scrolls up
+   to keep the writing edge in view. */
 
-function TypingReveal({ text }: { text: string }) {
-  const [visible, setVisible] = useState(false);
+function Typewriter({ text }: { text: string }) {
+  const [typed, setTyped] = useState("");
+  const panelRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 650);
+    if (typed.length >= text.length) return;
+    const t = setTimeout(() => setTyped(text.slice(0, typed.length + 1)), 35);
     return () => clearTimeout(t);
-  }, []);
-  const words = text.split(" ");
+  }, [typed, text]);
+
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (panel) panel.scrollTo({ top: panel.scrollHeight, behavior: "smooth" });
+  }, [typed]);
+
+  const finished = typed.length >= text.length;
+
   return (
-    <div style={{
-      fontFamily: "Inter, sans-serif",
-      fontSize: "clamp(14px, 2.1vw, 19px)",
-      fontWeight: 400,
-      color: "#111",
-      maxWidth: "560px",
-      lineHeight: 1.55,
+    <div ref={panelRef} style={{
+      flex: 1,
+      minHeight: 0,
+      overflowY: "hidden",
       marginTop: "32px",
     }}>
-      {words.map((w, i) => (
-        <span
-          key={i}
-          style={{
-            display: "inline-block",
-            opacity: visible ? 1 : 0,
-            transform: visible ? "translateY(0)" : "translateY(14px)",
-            transition: `opacity 0.5s ease ${i * 45}ms, transform 0.5s cubic-bezier(.22,1,.36,1) ${i * 45}ms`,
-          }}
-        >
-          {w}&nbsp;
-        </span>
-      ))}
+      <p style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(21px, 2.8vw, 28px)", fontWeight: 400, color: "#111", margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+        {typed}
+        {!finished && <span className="typewriter-cursor">|</span>}
+      </p>
     </div>
   );
 }
 
-/* ─── BlogRow ───────────────────────────────────────────── */
-/* Accordion row — click the "+" (rotates into an "×") to expand/collapse the excerpt. */
+/* ─── BlogCard ──────────────────────────────────────────── */
+/* Drawer pattern: a full-width dark face shows just the title + index at
+   rest. On hover it slides cleanly off to the left, revealing the
+   structured content underneath — numbered sidebar, title, description,
+   role badge. */
 
-function BlogRow({ title, excerpt }: { title: string; excerpt: string }) {
-  const [open, setOpen] = useState(false);
+function BlogCard({ index, title, excerpt, badge }: { index: number; title: string; excerpt: string; badge: string }) {
+  const [hovered, setHovered] = useState(false);
+  const num = String(index).padStart(2, "0");
   return (
-    <div style={{ borderBottom: "1px solid #f0f0f0", paddingBottom: "14px" }}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "16px",
-          width: "100%",
-          background: "none",
-          border: "none",
-          padding: 0,
-          cursor: "pointer",
-          textAlign: "left",
-          font: "inherit",
-        }}
-      >
-        <span style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(15px, 1.7vw, 18px)", fontWeight: 500, color: "#222", lineHeight: 1.4 }}>{title}</span>
-        <Plus
-          size={18}
-          strokeWidth={1.8}
-          color="#aaa"
-          style={{
-            flexShrink: 0,
-            transform: open ? "rotate(45deg)" : "rotate(0deg)",
-            transition: "transform 0.3s cubic-bezier(.22,1,.36,1)",
-          }}
-        />
-      </button>
-      <div style={{
-        maxHeight: open ? 80 : 0,
-        opacity: open ? 1 : 0,
-        marginTop: open ? "10px" : "0px",
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: "relative",
+        height: "76px",
+        borderRadius: 0,
         overflow: "hidden",
-        transition: "max-height 0.35s cubic-bezier(.22,1,.36,1), opacity 0.3s ease, margin-top 0.35s ease",
+        background: "#f7f7f7",
+      }}
+    >
+      {/* Revealed content — always underneath */}
+      <div style={{
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        alignItems: "center",
+        gap: "16px",
+        padding: "0 20px",
       }}>
-        <p style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", color: "#999", lineHeight: 1.6 }}>{excerpt}</p>
+        <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "20px", fontWeight: 700, color: "#e2e2e2", flexShrink: 0 }}>
+          {num}
+        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "14px", fontWeight: 700, color: "#111", marginBottom: "3px" }}>{title}</p>
+          <p style={{
+            fontFamily: "Inter, sans-serif",
+            fontSize: "12px",
+            color: "#888",
+            lineHeight: 1.4,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}>
+            {excerpt}
+          </p>
+        </div>
+        <span style={{
+          flexShrink: 0,
+          fontFamily: "'DM Mono', monospace",
+          fontSize: "9px",
+          fontWeight: 600,
+          color: TERRACOTTA,
+          background: `${TERRACOTTA}1c`,
+          padding: "3px 9px",
+          borderRadius: 999,
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+        }}>
+          {badge}
+        </span>
+      </div>
+
+      {/* Dark face — default state, slides off to the left on hover */}
+      <div style={{
+        position: "absolute",
+        inset: 0,
+        background: "#111",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "0 20px",
+        transform: hovered ? "translateX(-100%)" : "translateX(0)",
+        transition: "transform 0.5s cubic-bezier(.65,0,.35,1)",
+      }}>
+        <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "14px", fontWeight: 700, color: "#fff" }}>{title}</span>
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>{num}</span>
       </div>
     </div>
   );
@@ -494,8 +527,6 @@ function RevealSection({ children, delay = 0 }: { children: React.ReactNode; del
 /* ─── App ───────────────────────────────────────────────── */
 
 export default function App() {
-  const [panel, setPanel] = useState<PanelKey>(null);
-
   return (
     <div style={{ background: "#fff", minHeight: "100vh", fontFamily: "Inter, sans-serif" }}>
       <style>{`
@@ -527,9 +558,16 @@ export default function App() {
           transition: color 0.15s ease;
         }
         .nav-icon:hover { color: #111; }
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+        .typewriter-cursor {
+          display: inline-block;
+          margin-left: 2px;
+          animation: blink 1s step-end infinite;
+        }
       `}</style>
-
-      <InfoPanel type={panel} onClose={() => setPanel(null)} />
 
       {/* ── Nav ── */}
       <nav style={{
@@ -564,7 +602,7 @@ export default function App() {
         </svg>
         <div className="hero-grid">
           {/* LEFT — name, subheading, dynamic reveal text */}
-          <div style={{ animation: "heroIn 0.8s cubic-bezier(.22,1,.36,1) forwards" }}>
+          <div style={{ animation: "heroIn 0.8s cubic-bezier(.22,1,.36,1) forwards", display: "flex", flexDirection: "column" }}>
             <h1 style={{
               fontFamily: "'Chakra Petch', sans-serif",
               fontWeight: 700,
@@ -574,13 +612,7 @@ export default function App() {
               letterSpacing: "-0.02em",
               marginBottom: "28px",
             }}>
-              <span className="name-word" onClick={() => setPanel("tanishaa")} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && setPanel("tanishaa")}>
-                Tanishaa
-              </span>
-              {" "}
-              <span className="name-word" onClick={() => setPanel("sinha")} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && setPanel("sinha")}>
-                Sinha
-              </span>
+              Tanishaa Sinha
             </h1>
             <p style={{
               fontFamily: "Inter, sans-serif",
@@ -592,8 +624,8 @@ export default function App() {
             }}>
               A consumer trying to understand consumers — while exploring the black box known as technology.
             </p>
-            {/* TODO: paragraph text is a placeholder, to be replaced */}
-            <TypingReveal text="More on how I think, build, and take things apart — written up right here soon." />
+            {/* TODO: placeholder text, to be replaced */}
+            <Typewriter text="Hi, this is a demo. More on how I think, build, and take things apart. I'm a consumer trying to understand consumers, curious about the systems behind everyday technology — how products are built, how they influence behaviour, and what happens inside the machine most people never see. Writing this up properly, soon. Thanks for scrolling this far." />
           </div>
 
           {/* RIGHT — projects, 2 × 3 */}
@@ -619,20 +651,11 @@ export default function App() {
           <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "16px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
             About
           </p>
-          <div className="about-grid">
-            <div>
-              <p style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(17px, 1.9vw, 20px)", color: "#222", lineHeight: 1.75, marginBottom: "16px" }}>
-                I'm curious about the systems behind everyday technology — how products are built, how they influence behaviour, and what happens inside the machine most people never see.
-              </p>
-              <p style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(15px, 1.7vw, 18px)", color: "#999", lineHeight: 1.75 }}>
-                When I'm not building, I'm usually breaking something apart to understand how it works — or thinking about why people use technology the way they do.
-              </p>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {blogArticles.map((post) => (
-                <BlogRow key={post.id} title={post.title} excerpt={post.excerpt} />
-              ))}
-            </div>
+          <PhraseScatter />
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "56px" }}>
+            {blogArticles.map((post, i) => (
+              <BlogCard key={post.id} index={i + 1} title={post.title} excerpt={post.excerpt} badge={post.badge} />
+            ))}
           </div>
         </RevealSection>
       </section>
