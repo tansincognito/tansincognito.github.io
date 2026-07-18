@@ -221,26 +221,27 @@ function truncate(body: string, max = 22) {
   return body.length > max ? `${body.slice(0, max).trim()}…` : body;
 }
 
-/* Explicit (top%, left-or-right%) per phrase — a real 2-D scatter across
-   the canvas rather than a packed flex-wrap line. Alternating between
-   left- and right-anchoring (instead of always left%) is what actually
-   gets phrases touching both edges evenly, since a right-anchored phrase's
-   own width can't push it past the edge the way a left% anchor risks. */
-const PHRASE_POSITIONS: { top: string; left?: string; right?: string; transform?: string }[] = [
+/* Explicit (top%, left%) per phrase — a real 2-D scatter across the full
+   width of the canvas. Left values are spread across the whole 0-90% range
+   (not clustered near either edge) so the collage actually fills the page
+   instead of leaving a dead middle band; translateX handles the items
+   anchored toward the right edge so their own width can't push them past
+   100%. */
+const PHRASE_POSITIONS: { top: string; left: string; transform?: string }[] = [
   { top: "0%", left: "0%" },
-  { top: "8%", right: "0%" },
-  { top: "24%", left: "6%" },
-  { top: "36%", right: "4%" },
-  { top: "54%", left: "0%" },
-  { top: "68%", right: "6%" },
-  { top: "42%", left: "50%", transform: "translateX(-50%)" },
+  { top: "2%", left: "58%" },
+  { top: "24%", left: "18%" },
+  { top: "12%", left: "84%", transform: "translateX(-100%)" },
+  { top: "66%", left: "6%" },
+  { top: "56%", left: "81%" },
+  { top: "calc(60% + 9px)", left: "55%", transform: "translateX(-50%)" },
 ];
 
 function PhraseScatter() {
   const phrases = [...panelContent.tanishaa.sections, ...panelContent.sinha.sections, ...EXTRA_PHRASES]
     .filter((s) => !OMITTED_HEADINGS.has(s.heading));
   return (
-    <div style={{ position: "relative", minHeight: "360px" }}>
+    <div style={{ position: "relative", minHeight: "331px" }}>
       {phrases.map((s, i) => {
         const v = PHRASE_STYLES[i % PHRASE_STYLES.length];
         const p = PHRASE_POSITIONS[i % PHRASE_POSITIONS.length];
@@ -253,7 +254,6 @@ function PhraseScatter() {
               position: "absolute",
               top: p.top,
               left: p.left,
-              right: p.right,
               transform: p.transform,
               fontFamily: "'Libre Baskerville', serif",
               fontSize: v.fontSize,
