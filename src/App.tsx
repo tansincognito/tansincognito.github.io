@@ -76,11 +76,38 @@ const projects: Project[] = [
   { id: "p6", name: "Coming Soon", tagline: "", description: "", stack: [], gradient: { from: "#f093fb", to: "#f5576c" }, Icon: Layers,   github: "#", live: "#", active: false },
 ];
 
-const blogArticles = [
-  // TODO: replace title + excerpt + badge with real post content
-  { id: "post-1", title: "Why most B2B onboarding fails in the first five minutes", excerpt: "Placeholder excerpt — swap in the real opening paragraph when the post is ready.", badge: "Product" },
-  { id: "post-2", title: "Building a Chrome extension nobody asked for", excerpt: "Placeholder excerpt — swap in the real opening paragraph when the post is ready.", badge: "Build" },
-  { id: "post-3", title: "What travel-planning software gets wrong", excerpt: "Placeholder excerpt — swap in the real opening paragraph when the post is ready.", badge: "Notes" },
+const thoughtExperiments = [
+  // TODO: replace question + each flowchart stage with real content
+  {
+    id: "te-1",
+    question: "Why does most B2B onboarding fail in the first five minutes?",
+    badge: "Product",
+    firstPrinciples: "Users don't read — they scan for the fastest path to value.",
+    possibleExplanations: "Onboarding is usually built around the product team's mental model, not the user's.",
+    counterArguments: "Some of that drop-off is just poor product-market fit, not a UX problem.",
+    conclusion: "Cut every step that doesn't map directly to the user's first real 'aha' moment.",
+    openQuestions: "How do you measure the 'aha' moment before it's already happened?",
+  },
+  {
+    id: "te-2",
+    question: "Why build a Chrome extension nobody asked for?",
+    badge: "Build",
+    firstPrinciples: "The best way to understand a workflow is to try to automate it yourself.",
+    possibleExplanations: "Existing tools solve the general case, not the specific friction I actually feel.",
+    counterArguments: "Building for an audience of one rarely generalises into something others want.",
+    conclusion: "Ship it anyway — the learning compounds even if the tool doesn't.",
+    openQuestions: "At what point does a personal tool become worth polishing for other people?",
+  },
+  {
+    id: "te-3",
+    question: "What does travel-planning software get wrong?",
+    badge: "Notes",
+    firstPrinciples: "Planning a trip is a group decision problem before it's a logistics problem.",
+    possibleExplanations: "Most tools optimise for a single planner, not for consensus among a group.",
+    counterArguments: "Group consensus tools add friction that solo planners don't want to pay for.",
+    conclusion: "Default to solo-friendly, make group mode an explicit, opt-in layer on top.",
+    openQuestions: "Can one interface serve both modes without feeling like two different products?",
+  },
 ];
 
 const socials = [
@@ -208,13 +235,13 @@ const OMITTED_HEADINGS = new Set(["into", "Studying", "Building"]);
    on Math.random(). Libre Baskerville only ships 400/700 (and italic), so
    weight variety comes from alternating those two plus italics. */
 const PHRASE_STYLES = [
-  { fontSize: "42px", color: "#E8437E", fontWeight: 700, fontStyle: "normal" },
-  { fontSize: "24px", color: "#111", fontWeight: 400, fontStyle: "italic" },
-  { fontSize: "54px", color: "#FF6B35", fontWeight: 700, fontStyle: "normal" },
-  { fontSize: "28px", color: "#2F6FED", fontWeight: 700, fontStyle: "italic" },
-  { fontSize: "38px", color: TERRACOTTA, fontWeight: 700, fontStyle: "normal" },
-  { fontSize: "26px", color: "#1FAA59", fontWeight: 400, fontStyle: "italic" },
-  { fontSize: "48px", color: "#8B5CF6", fontWeight: 700, fontStyle: "normal" },
+  { fontSize: "42px", color: "#E8437E", fontWeight: 700, fontStyle: "normal", maxWidth: "260px" },
+  { fontSize: "24px", color: "#111", fontWeight: 400, fontStyle: "italic", maxWidth: "200px" },
+  { fontSize: "54px", color: "#FF6B35", fontWeight: 700, fontStyle: "normal", maxWidth: "320px" },
+  { fontSize: "28px", color: "#2F6FED", fontWeight: 700, fontStyle: "italic", maxWidth: "220px" },
+  { fontSize: "38px", color: TERRACOTTA, fontWeight: 700, fontStyle: "normal", maxWidth: "260px" },
+  { fontSize: "26px", color: "#1FAA59", fontWeight: 400, fontStyle: "italic", maxWidth: "200px" },
+  { fontSize: "48px", color: "#8B5CF6", fontWeight: 700, fontStyle: "normal", maxWidth: "290px" },
 ];
 
 function truncate(body: string, max = 22) {
@@ -229,17 +256,48 @@ function truncate(body: string, max = 22) {
    100%. */
 const PHRASE_POSITIONS: { top: string; left: string; transform?: string }[] = [
   { top: "0%", left: "0%" },
-  { top: "2%", left: "58%" },
-  { top: "24%", left: "18%" },
-  { top: "12%", left: "84%", transform: "translateX(-100%)" },
+  { top: "6%", left: "83%" },
+  { top: "2%", left: "48%" },
+  { top: "22%", left: "34%", transform: "translateX(-100%)" },
   { top: "66%", left: "6%" },
-  { top: "56%", left: "81%" },
-  { top: "calc(60% + 9px)", left: "55%", transform: "translateX(-50%)" },
+  { top: "56%", left: "75%" },
+  { top: "calc(65% + 9px)", left: "50%", transform: "translateX(-50%)" },
 ];
 
 function PhraseScatter() {
+  const isMobile = useIsMobile();
   const phrases = [...panelContent.tanishaa.sections, ...panelContent.sinha.sections, ...EXTRA_PHRASES]
     .filter((s) => !OMITTED_HEADINGS.has(s.heading));
+
+  if (isMobile) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+        {phrases.map((s, i) => {
+          const v = PHRASE_STYLES[i % PHRASE_STYLES.length];
+          return (
+            <ScrambleText
+              key={s.heading}
+              text={s.heading}
+              hoverText={truncate(s.body)}
+              style={{
+                display: "block",
+                fontFamily: "'Libre Baskerville', serif",
+                fontSize: `clamp(22px, 8vw, ${v.fontSize})`,
+                fontWeight: v.fontWeight,
+                fontStyle: v.fontStyle,
+                color: v.color,
+                lineHeight: 1.25,
+                cursor: "default",
+                whiteSpace: "normal",
+                wordBreak: "break-word",
+              }}
+            />
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div style={{ position: "relative", minHeight: "331px" }}>
       {phrases.map((s, i) => {
@@ -255,14 +313,17 @@ function PhraseScatter() {
               top: p.top,
               left: p.left,
               transform: p.transform,
+              display: "inline-block",
+              maxWidth: v.maxWidth,
               fontFamily: "'Libre Baskerville', serif",
               fontSize: v.fontSize,
               fontWeight: v.fontWeight,
               fontStyle: v.fontStyle,
               color: v.color,
-              lineHeight: 1.05,
+              lineHeight: 1.15,
               cursor: "default",
-              whiteSpace: "nowrap",
+              whiteSpace: "normal",
+              wordBreak: "break-word",
             }}
           />
         );
@@ -392,20 +453,109 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
   );
 }
 
+/* ─── HeroName ──────────────────────────────────────────── */
+/* The main "Tanishaa Sinha" heading — each word eases its own
+   letter-spacing open on hover, independently of the other. */
+
+function HoverWord({ text }: { text: string }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <span
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "inline-block",
+        letterSpacing: hovered ? "0.02em" : "-0.02em",
+        transition: "letter-spacing 0.4s cubic-bezier(.22,1,.36,1)",
+      }}
+    >
+      {text}
+    </span>
+  );
+}
+
+function HeroName() {
+  return (
+    <h1
+      style={{
+        fontFamily: "'Chakra Petch', sans-serif",
+        fontWeight: 700,
+        fontSize: "clamp(37px, 6.8vw, 82px)",
+        lineHeight: 0.95,
+        color: "#111",
+        marginBottom: "28px",
+        cursor: "default",
+      }}
+    >
+      <HoverWord text="Tanishaa" />{" "}
+      <HoverWord text="Sinha" />
+    </h1>
+  );
+}
+
 /* ─── Typewriter ────────────────────────────────────────── */
 /* One continuous, uniformly-styled block of text typed out character by
    character — like watching someone type a long document. Lives in a
    fixed-height panel that fills the remaining space next to the project
    grid; as the text grows past the panel's height, it smooth-scrolls up
-   to keep the writing edge in view. */
+   to keep the writing edge in view. A handful of key phrases are
+   subtly enlarged/highlighted as they get typed out. */
+
+const HIGHLIGHT_PHRASES = [
+  "understand how things and people work",
+  "create workflows",
+  "how products are built",
+];
+
+function buildHighlightSegments(text: string) {
+  const matches: { start: number; end: number }[] = [];
+  HIGHLIGHT_PHRASES.forEach((phrase) => {
+    const idx = text.indexOf(phrase);
+    if (idx !== -1) matches.push({ start: idx, end: idx + phrase.length });
+  });
+  matches.sort((a, b) => a.start - b.start);
+
+  const segments: { text: string; highlight: boolean }[] = [];
+  let cursor = 0;
+  matches.forEach(({ start, end }) => {
+    if (start > cursor) segments.push({ text: text.slice(cursor, start), highlight: false });
+    segments.push({ text: text.slice(start, end), highlight: true });
+    cursor = end;
+  });
+  if (cursor < text.length) segments.push({ text: text.slice(cursor), highlight: false });
+  return segments;
+}
+
+function renderTyped(segments: { text: string; highlight: boolean }[], upto: number) {
+  const nodes: React.ReactNode[] = [];
+  let consumed = 0;
+  for (let i = 0; i < segments.length && consumed < upto; i++) {
+    const seg = segments[i];
+    const slice = seg.text.slice(0, upto - consumed);
+    if (slice.length > 0) {
+      nodes.push(
+        seg.highlight ? (
+          <span key={i} style={{ fontWeight: 600, fontSize: "1.08em", color: "#111", textShadow: "1px 1px 1px rgba(120,120,120,0.5)" }}>
+            {slice}
+          </span>
+        ) : (
+          <span key={i}>{slice}</span>
+        )
+      );
+    }
+    consumed += seg.text.length;
+  }
+  return nodes;
+}
 
 function Typewriter({ text }: { text: string }) {
   const [typed, setTyped] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
+  const segments = useRef(buildHighlightSegments(text)).current;
 
   useEffect(() => {
     if (typed.length >= text.length) return;
-    const t = setTimeout(() => setTyped(text.slice(0, typed.length + 1)), 35);
+    const t = setTimeout(() => setTyped(text.slice(0, typed.length + 1)), 24);
     return () => clearTimeout(t);
   }, [typed, text]);
 
@@ -423,91 +573,354 @@ function Typewriter({ text }: { text: string }) {
       overflowY: "hidden",
       marginTop: "32px",
     }}>
-      <p style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(21px, 2.8vw, 28px)", fontWeight: 400, color: "#111", margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-        {typed}
+      <p style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(18px, 2.8vw, 24px)", fontWeight: 400, color: "#111", margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+        {renderTyped(segments, typed.length)}
         {!finished && <span className="typewriter-cursor">|</span>}
       </p>
     </div>
   );
 }
 
-/* ─── BlogCard ──────────────────────────────────────────── */
-/* Drawer pattern: a full-width dark face shows just the title + index at
-   rest. On hover it slides cleanly off to the left, revealing the
-   structured content underneath — numbered sidebar, title, description,
-   role badge. */
+/* ─── ThoughtCard ───────────────────────────────────────── */
+/* Drawer pattern up top (unchanged): a dark face shows title + index at
+   rest, sliding off to the left on hover to reveal a teaser underneath.
+   Clicking the card toggles a flowchart panel below it that walks the
+   question through First Principles → Possible Explanations → Counter
+   Arguments → My Conclusion → Open Questions. */
 
-function BlogCard({ index, title, excerpt, badge }: { index: number; title: string; excerpt: string; badge: string }) {
+type ThoughtExperiment = typeof thoughtExperiments[number];
+
+const FLOW_STAGES: { key: keyof ThoughtExperiment; label: string }[] = [
+  { key: "question", label: "Question" },
+  { key: "firstPrinciples", label: "First Principles" },
+  { key: "possibleExplanations", label: "Possible Explanations" },
+  { key: "counterArguments", label: "Counter Arguments" },
+  { key: "conclusion", label: "My Conclusion" },
+  { key: "openQuestions", label: "Open Questions" },
+];
+
+function ThoughtCard({ index, te }: { index: number; te: ThoughtExperiment }) {
   const [hovered, setHovered] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const num = String(index).padStart(2, "0");
   return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        position: "relative",
-        height: "76px",
-        borderRadius: 0,
-        overflow: "hidden",
-        background: "#f7f7f7",
-      }}
-    >
-      {/* Revealed content — always underneath */}
-      <div style={{
-        position: "absolute",
-        inset: 0,
-        display: "flex",
-        alignItems: "center",
-        gap: "16px",
-        padding: "0 20px",
-      }}>
-        <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "20px", fontWeight: 700, color: "#e2e2e2", flexShrink: 0 }}>
-          {num}
-        </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "14px", fontWeight: 700, color: "#111", marginBottom: "3px" }}>{title}</p>
-          <p style={{
-            fontFamily: "Inter, sans-serif",
-            fontSize: "12px",
-            color: "#888",
-            lineHeight: 1.4,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}>
-            {excerpt}
-          </p>
-        </div>
-        <span style={{
-          flexShrink: 0,
-          fontFamily: "'DM Mono', monospace",
-          fontSize: "9px",
-          fontWeight: 600,
-          color: TERRACOTTA,
-          background: `${TERRACOTTA}1c`,
-          padding: "3px 9px",
-          borderRadius: 999,
-          textTransform: "uppercase",
-          letterSpacing: "0.06em",
+    <div>
+      <div
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onClick={() => setExpanded((v) => !v)}
+        style={{
+          position: "relative",
+          height: "76px",
+          borderRadius: 0,
+          overflow: "hidden",
+          background: "#f7f7f7",
+          cursor: "pointer",
+        }}
+      >
+        {/* Revealed content — always underneath */}
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: "16px",
+          padding: "0 20px",
         }}>
-          {badge}
-        </span>
+          <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "20px", fontWeight: 700, color: "#e2e2e2", flexShrink: 0 }}>
+            {num}
+          </span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "14px", fontWeight: 700, color: "#111", marginBottom: "3px" }}>{te.question}</p>
+            <p style={{
+              fontFamily: "Inter, sans-serif",
+              fontSize: "12px",
+              color: "#888",
+              lineHeight: 1.4,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}>
+              {te.firstPrinciples}
+            </p>
+          </div>
+          <span style={{
+            flexShrink: 0,
+            fontFamily: "'DM Mono', monospace",
+            fontSize: "9px",
+            fontWeight: 600,
+            color: TERRACOTTA,
+            background: `${TERRACOTTA}1c`,
+            padding: "3px 9px",
+            borderRadius: 999,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+          }}>
+            {te.badge}
+          </span>
+          <span style={{
+            flexShrink: 0,
+            fontFamily: "'DM Mono', monospace",
+            fontSize: "14px",
+            color: "#bbb",
+            transform: expanded ? "rotate(45deg)" : "rotate(0deg)",
+            transition: "transform 0.35s ease",
+          }}>
+            +
+          </span>
+        </div>
+
+        {/* Dark face — default state, slides off to the left on hover */}
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          background: "#111",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 20px",
+          transform: hovered ? "translateX(-100%)" : "translateX(0)",
+          transition: "transform 0.5s cubic-bezier(.65,0,.35,1)",
+        }}>
+          <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "14px", fontWeight: 700, color: "#fff" }}>{te.question}</span>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>{num}</span>
+        </div>
       </div>
 
-      {/* Dark face — default state, slides off to the left on hover */}
+      {/* Flowchart panel */}
       <div style={{
-        position: "absolute",
-        inset: 0,
-        background: "#111",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 20px",
-        transform: hovered ? "translateX(-100%)" : "translateX(0)",
-        transition: "transform 0.5s cubic-bezier(.65,0,.35,1)",
+        maxHeight: expanded ? "1000px" : "0px",
+        opacity: expanded ? 1 : 0,
+        overflow: "hidden",
+        background: "#fafafa",
+        transition: "max-height 0.6s cubic-bezier(.22,1,.36,1), opacity 0.4s ease",
       }}>
-        <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "14px", fontWeight: 700, color: "#fff" }}>{title}</span>
-        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>{num}</span>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "32px 20px" }}>
+          {FLOW_STAGES.map((stage, i) => (
+            <div key={stage.key} style={{ width: "100%", maxWidth: "540px", textAlign: "center" }}>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "10px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px" }}>
+                {stage.label}
+              </p>
+              <p style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", color: "#111", lineHeight: 1.55 }}>
+                {te[stage.key]}
+              </p>
+              {i < FLOW_STAGES.length - 1 && (
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "16px", color: "#ccc", margin: "14px 0" }}>↓</div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── ResumeScanner ─────────────────────────────────────── */
+/* A ghost résumé document scans perpetually; clicking runs two fast beam
+   passes (1s) into a flash, then the right panel reveals parsed
+   résumé content in stages — name, experience, skills, education. */
+
+type ScanStatus = "idle" | "scanning" | "flash" | "complete";
+
+const resumeData = {
+  name: "Tanishaa Sinha",
+  title: "Product Thinker & Consumer Researcher", // TODO: confirm tagline
+  experience: [
+    { role: "Product Research Intern", org: "TODO — Company", period: "TODO — Dates", blurb: "Studied user behaviour across onboarding flows and synthesised findings into design briefs." }, // TODO: replace with real role
+    { role: "Content & Strategy", org: "TODO — Company", period: "TODO — Dates", blurb: "Built audience insight reports for consumer brands using qual/quant methods." }, // TODO: replace with real role
+    { role: "Writing & Editorial", org: "Self-directed", period: "TODO — Dates", blurb: "Explored how technology shapes everyday decisions and consumer perception." }, // TODO: replace with real role
+  ],
+  skills: ["User Research", "Product Thinking", "Writing", "Figma", "Systems Design", "Consumer Behaviour"], // TODO: replace
+  education: { degree: "TODO — Degree", school: "TODO — University", period: "TODO — Year" }, // TODO: replace
+};
+
+const CORNER_TICKS: React.CSSProperties[] = [
+  { top: 0, left: 0, borderTop: "1.5px solid #bbb", borderLeft: "1.5px solid #bbb" },
+  { top: 0, right: 0, borderTop: "1.5px solid #bbb", borderRight: "1.5px solid #bbb" },
+  { bottom: 0, left: 0, borderBottom: "1.5px solid #bbb", borderLeft: "1.5px solid #bbb" },
+  { bottom: 0, right: 0, borderBottom: "1.5px solid #bbb", borderRight: "1.5px solid #bbb" },
+];
+
+function GhostDocument({ status }: { status: ScanStatus }) {
+  const scanning = status === "scanning";
+  return (
+    <div style={{ position: "relative", width: "120px", height: "170px", background: "#f9f9f9", flexShrink: 0 }}>
+      {CORNER_TICKS.map((c, i) => (
+        <div key={i} style={{ position: "absolute", width: "9px", height: "9px", ...c }} />
+      ))}
+
+      <div style={{ padding: "13px 11px", display: "flex", flexDirection: "column", gap: "6px" }}>
+        <div style={{ height: "6px", width: "65%", background: "#ddd" }} />
+        <div style={{ height: "4px", width: "40%", background: "#e6e6e6", marginBottom: "8px" }} />
+        <div style={{ height: "4px", width: "80%", background: "#e6e6e6" }} />
+        <div style={{ height: "4px", width: "70%", background: "#e6e6e6" }} />
+        <div style={{ height: "4px", width: "55%", background: "#e6e6e6", marginBottom: "8px" }} />
+        <div style={{ height: "4px", width: "75%", background: "#e6e6e6" }} />
+        <div style={{ height: "4px", width: "60%", background: "#e6e6e6" }} />
+        <div style={{ height: "4px", width: "45%", background: "#e6e6e6" }} />
+      </div>
+
+      <div className={`scan-beam ${scanning ? "scan-beam-fast" : ""} ${status === "complete" ? "scan-beam-paused" : ""}`} />
+
+      {scanning && (
+        <div style={{ position: "absolute", bottom: "9px", left: 0, right: 0, display: "flex", justifyContent: "center", gap: "4px" }}>
+          <span className="scan-dot" style={{ animationDelay: "0s" }} />
+          <span className="scan-dot" style={{ animationDelay: "0.2s" }} />
+          <span className="scan-dot" style={{ animationDelay: "0.4s" }} />
+        </div>
+      )}
+
+      <div className={`scan-flash ${status === "flash" ? "scan-flash-active" : ""}`} />
+    </div>
+  );
+}
+
+function Reveal({ delay = 0, scale = false, children }: { delay?: number; scale?: boolean; children: React.ReactNode }) {
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setShown(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+  return (
+    <div style={{
+      opacity: shown ? 1 : 0,
+      transform: shown ? (scale ? "scale(1)" : "translateX(0)") : (scale ? "scale(0.7)" : "translateX(-36px)"),
+      transition: "opacity 0.5s ease, transform 0.5s cubic-bezier(.22,1,.36,1)",
+      display: scale ? "inline-block" : "block",
+    }}>
+      {children}
+    </div>
+  );
+}
+
+const RESUME_LABEL_STYLE: React.CSSProperties = {
+  fontFamily: "'DM Mono', monospace",
+  fontSize: "11px",
+  fontWeight: 500,
+  color: "#bbb",
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  marginBottom: "10px",
+};
+
+function ResumeScanner() {
+  const [status, setStatus] = useState<ScanStatus>("idle");
+  const [runId, setRunId] = useState(0);
+  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const isMobile = useIsMobile();
+
+  const runScan = () => {
+    timeoutsRef.current.forEach(clearTimeout);
+    setRunId((n) => n + 1);
+    setStatus("scanning");
+    timeoutsRef.current = [
+      setTimeout(() => setStatus("flash"), 1000),
+      setTimeout(() => setStatus("complete"), 1150),
+    ];
+  };
+
+  useEffect(() => () => timeoutsRef.current.forEach(clearTimeout), []);
+
+  return (
+    <div className="hero-grid">
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px", marginLeft: isMobile ? 0 : "20%" }}>
+        <GhostDocument status={status} />
+        <button
+          className="scan-btn"
+          disabled={status === "scanning" || status === "flash"}
+          onClick={runScan}
+        >
+          {status === "idle" && "Scan Résumé"}
+          {(status === "scanning" || status === "flash") && <>Scanning<span className="typewriter-cursor">_</span></>}
+          {status === "complete" && "✓ extracted"}
+        </button>
+        {status === "complete" && (
+          <button className="scan-reset-btn" onClick={runScan}>Reset</button>
+        )}
+      </div>
+
+      <div style={{ minWidth: "240px" }}>
+        {status !== "complete" ? (
+          <div>
+            <p style={RESUME_LABEL_STYLE}>Awaiting scan</p>
+            {[70, 90, 55, 80, 62].map((w, i) => (
+              <div key={i} style={{ height: "3px", width: `${w}%`, background: "#eee", marginBottom: "12px" }} />
+            ))}
+          </div>
+        ) : (
+          <div key={runId} style={{ display: "flex", flexDirection: "column", gap: "22px" }}>
+            <Reveal delay={0}>
+              <div>
+                <h3 style={{ fontFamily: "'Instrument Serif', serif", fontSize: "clamp(32px, 4vw, 46px)", fontWeight: 400, color: "#111", marginBottom: "6px" }}>
+                  {resumeData.name}
+                </h3>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "13px", color: "#888" }}>{resumeData.title}</p>
+              </div>
+            </Reveal>
+
+            <Reveal delay={140}><div style={{ height: "1px", background: "#eee" }} /></Reveal>
+
+            <div>
+              <Reveal delay={200}><p style={RESUME_LABEL_STYLE}>Experience</p></Reveal>
+              <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+                {resumeData.experience.map((e, i) => (
+                  <Reveal key={e.role} delay={260 + i * 110}>
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "12px", flexWrap: "wrap" }}>
+                        <span style={{
+                          fontFamily: "'DM Mono', monospace",
+                          fontSize: "15px",
+                          fontWeight: 700,
+                          color: "#111",
+                        }}>
+                          {e.role}
+                        </span>
+                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "12px", color: "#bbb" }}>{e.period}</span>
+                      </div>
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "12px", color: "#bbb", marginTop: "2px", marginBottom: "6px" }}>{e.org}</p>
+                      <p style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", color: "#111", lineHeight: 1.55 }}>{e.blurb}</p>
+                    </div>
+                  </Reveal>
+                ))}
+              </div>
+            </div>
+
+            <Reveal delay={650}><div style={{ height: "1px", background: "#eee" }} /></Reveal>
+
+            <div>
+              <Reveal delay={700}><p style={RESUME_LABEL_STYLE}>Skills</p></Reveal>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                {resumeData.skills.map((s, i) => (
+                  <Reveal key={s} delay={760 + i * 70} scale>
+                    <span style={{
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: "11px",
+                      color: "#111",
+                      background: "#fff",
+                      border: "1px solid #ddd",
+                      padding: "5px 12px",
+                      borderRadius: "4px",
+                    }}>
+                      {s.toUpperCase()}
+                    </span>
+                  </Reveal>
+                ))}
+              </div>
+            </div>
+
+            <Reveal delay={1150}><div style={{ height: "1px", background: "#eee" }} /></Reveal>
+
+            <div>
+              <Reveal delay={1200}><p style={RESUME_LABEL_STYLE}>Education</p></Reveal>
+              <Reveal delay={1250}>
+                <div>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "15px", fontWeight: 700, color: "#111" }}>{resumeData.education.degree}</p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "12px", color: "#888", marginTop: "3px" }}>{resumeData.education.school}, {resumeData.education.period}</p>
+                </div>
+              </Reveal>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -567,6 +980,85 @@ export default function App() {
           margin-left: 2px;
           animation: blink 1s step-end infinite;
         }
+        @keyframes scanBeam {
+          0% { top: 0%; opacity: 0; }
+          8% { opacity: 1; }
+          92% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+        .scan-beam {
+          position: absolute;
+          left: 5%;
+          right: 5%;
+          height: 2px;
+          background: linear-gradient(90deg, transparent, rgba(17,17,17,0.55), transparent);
+          animation: scanBeam 1.8s ease-in-out infinite;
+        }
+        .scan-beam-fast {
+          animation-duration: 0.5s;
+        }
+        .scan-beam-paused {
+          animation-play-state: paused;
+          opacity: 0;
+        }
+        @keyframes dotBlink {
+          0%, 80%, 100% { opacity: 0.2; }
+          40% { opacity: 1; }
+        }
+        .scan-dot {
+          width: 4px;
+          height: 4px;
+          border-radius: 50%;
+          background: #111;
+          display: inline-block;
+          animation: dotBlink 1.2s ease-in-out infinite;
+        }
+        .scan-flash {
+          position: absolute;
+          inset: 0;
+          background: #111;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.1s ease;
+        }
+        .scan-flash-active {
+          opacity: 0.55;
+          transition: opacity 0.05s ease;
+        }
+        .scan-btn {
+          font-family: 'DM Mono', monospace;
+          font-size: 11px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          padding: 9px 16px;
+          background: #fff;
+          color: #111;
+          border: 1px solid #111;
+          cursor: pointer;
+          transition: background 0.2s ease, color 0.2s ease;
+        }
+        .scan-btn:hover:not(:disabled) {
+          background: #111;
+          color: #fff;
+        }
+        .scan-btn:disabled {
+          color: #bbb;
+          border-color: #ddd;
+          cursor: default;
+        }
+        .scan-reset-btn {
+          font-family: 'DM Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #888;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 0;
+          transition: color 0.2s ease;
+        }
+        .scan-reset-btn:hover { color: #111; }
       `}</style>
 
       {/* ── Nav ── */}
@@ -603,17 +1095,7 @@ export default function App() {
         <div className="hero-grid">
           {/* LEFT — name, subheading, dynamic reveal text */}
           <div style={{ animation: "heroIn 0.8s cubic-bezier(.22,1,.36,1) forwards", display: "flex", flexDirection: "column" }}>
-            <h1 style={{
-              fontFamily: "'Chakra Petch', sans-serif",
-              fontWeight: 700,
-              fontSize: "clamp(37px, 6.8vw, 82px)",
-              lineHeight: 0.95,
-              color: "#111",
-              letterSpacing: "-0.02em",
-              marginBottom: "28px",
-            }}>
-              Tanishaa Sinha
-            </h1>
+            <HeroName />
             <p style={{
               fontFamily: "Inter, sans-serif",
               fontSize: "clamp(14px, 2.1vw, 19px)",
@@ -625,7 +1107,7 @@ export default function App() {
               A consumer trying to understand consumers — while exploring the black box known as technology.
             </p>
             {/* TODO: placeholder text, to be replaced */}
-            <Typewriter text="Hi, this is a demo. More on how I think, build, and take things apart. I'm a consumer trying to understand consumers, curious about the systems behind everyday technology — how products are built, how they influence behaviour, and what happens inside the machine most people never see. Writing this up properly, soon. Thanks for scrolling this far." />
+            <Typewriter text="hi , I like to understand how things and people work , create workflows to make lives (or atleast my life) easier and try out things which expand my mind . I am super interested in how products are built, how they influence behaviour, and what happens behind-the-scenes most people never see. take a look around!" />
           </div>
 
           {/* RIGHT — projects, 2 × 3 */}
@@ -645,6 +1127,16 @@ export default function App() {
         </div>
       </section>
 
+      {/* ── Resume ── */}
+      <section style={{ padding: "0 24px 96px", width: "100%" }}>
+        <RevealSection>
+          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "16px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
+            Resume
+          </p>
+          <ResumeScanner />
+        </RevealSection>
+      </section>
+
       {/* ── About ── */}
       <section style={{ padding: "0 24px 96px", width: "100%" }}>
         <RevealSection>
@@ -652,9 +1144,12 @@ export default function App() {
             About
           </p>
           <PhraseScatter />
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "56px" }}>
-            {blogArticles.map((post, i) => (
-              <BlogCard key={post.id} index={i + 1} title={post.title} excerpt={post.excerpt} badge={post.badge} />
+          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "16px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: "56px", marginBottom: "20px" }}>
+            Thought Experiments
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {thoughtExperiments.map((te, i) => (
+              <ThoughtCard key={te.id} index={i + 1} te={te} />
             ))}
           </div>
         </RevealSection>
