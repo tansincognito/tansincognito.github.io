@@ -498,35 +498,37 @@ function HeroName() {
    character — like watching someone type a long document. Lives in a
    fixed-height panel that fills the remaining space next to the project
    grid; as the text grows past the panel's height, it smooth-scrolls up
-   to keep the writing edge in view. A handful of key phrases are
-   subtly enlarged/highlighted as they get typed out. */
+   to keep the writing edge in view. A handful of key phrases get a thick
+   pastel underline drawn behind the text (not over it) as they're typed,
+   so the color bleeds through descenders and letter gaps like a
+   highlighter held low against the baseline. */
 
 const HIGHLIGHT_PHRASES = [
-  "understand how things and people work",
-  "create workflows",
-  "how products are built",
+  { text: "understand how things and people work", color: "#FFDCC2" }, // peach
+  { text: "create workflows", color: "#C7F0DC" }, // mint
+  { text: "how products are built", color: "#E1D7F5" }, // lavender
 ];
 
 function buildHighlightSegments(text: string) {
-  const matches: { start: number; end: number }[] = [];
-  HIGHLIGHT_PHRASES.forEach((phrase) => {
+  const matches: { start: number; end: number; color: string }[] = [];
+  HIGHLIGHT_PHRASES.forEach(({ text: phrase, color }) => {
     const idx = text.indexOf(phrase);
-    if (idx !== -1) matches.push({ start: idx, end: idx + phrase.length });
+    if (idx !== -1) matches.push({ start: idx, end: idx + phrase.length, color });
   });
   matches.sort((a, b) => a.start - b.start);
 
-  const segments: { text: string; highlight: boolean }[] = [];
+  const segments: { text: string; highlight: boolean; color?: string }[] = [];
   let cursor = 0;
-  matches.forEach(({ start, end }) => {
+  matches.forEach(({ start, end, color }) => {
     if (start > cursor) segments.push({ text: text.slice(cursor, start), highlight: false });
-    segments.push({ text: text.slice(start, end), highlight: true });
+    segments.push({ text: text.slice(start, end), highlight: true, color });
     cursor = end;
   });
   if (cursor < text.length) segments.push({ text: text.slice(cursor), highlight: false });
   return segments;
 }
 
-function renderTyped(segments: { text: string; highlight: boolean }[], upto: number) {
+function renderTyped(segments: { text: string; highlight: boolean; color?: string }[], upto: number) {
   const nodes: React.ReactNode[] = [];
   let consumed = 0;
   for (let i = 0; i < segments.length && consumed < upto; i++) {
@@ -535,7 +537,14 @@ function renderTyped(segments: { text: string; highlight: boolean }[], upto: num
     if (slice.length > 0) {
       nodes.push(
         seg.highlight ? (
-          <span key={i} style={{ fontWeight: 600, fontSize: "1.08em", color: "#111", textShadow: "1px 1px 1px rgba(120,120,120,0.5)" }}>
+          <span key={i} style={{
+            fontWeight: 600,
+            color: "#111",
+            backgroundImage: `linear-gradient(${seg.color}, ${seg.color})`,
+            backgroundRepeat: "no-repeat",
+            backgroundSize: "100% 9px",
+            backgroundPosition: "0 92%",
+          }}>
             {slice}
           </span>
         ) : (
