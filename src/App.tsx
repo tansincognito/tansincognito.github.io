@@ -163,6 +163,28 @@ function useReveal() {
   return { ref, visible };
 }
 
+/* Hides nav on scroll-down past a small threshold, brings it back on
+   scroll-up — the only orientation feedback the page gives across four
+   sections, without adding a new visual element (progress bar, dots). */
+function useNavVisible() {
+  const [visible, setVisible] = useState(true);
+  const lastY = useRef(0);
+  useEffect(() => {
+    lastY.current = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const delta = y - lastY.current;
+      if (y < 80) setVisible(true);
+      else if (delta > 4) setVisible(false);
+      else if (delta < -4) setVisible(true);
+      lastY.current = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return visible;
+}
+
 function useIsMobile() {
   const [mobile, setMobile] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth < 768 : false
@@ -185,6 +207,7 @@ const SCRAMBLE_CHARS = "!<>-_\\/[]{}—=+*^?#";
 function ScrambleText({ text, hoverText, style }: { text: string; hoverText: string; style: React.CSSProperties }) {
   const [display, setDisplay] = useState(text);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const activeRef = useRef(false);
 
   const scrambleTo = (target: string) => {
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -211,6 +234,10 @@ function ScrambleText({ text, hoverText, style }: { text: string; hoverText: str
       style={style}
       onMouseEnter={() => scrambleTo(hoverText)}
       onMouseLeave={() => scrambleTo(text)}
+      onClick={() => {
+        activeRef.current = !activeRef.current;
+        scrambleTo(activeRef.current ? hoverText : text);
+      }}
     >
       {display}
     </span>
@@ -266,12 +293,13 @@ const PHRASE_POSITIONS: { top: string; left: string; transform?: string }[] = [
 
 function PhraseScatter() {
   const isMobile = useIsMobile();
+  const { ref, visible } = useReveal();
   const phrases = [...panelContent.tanishaa.sections, ...panelContent.sinha.sections, ...EXTRA_PHRASES]
     .filter((s) => !OMITTED_HEADINGS.has(s.heading));
 
   if (isMobile) {
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+      <div ref={ref} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
         {phrases.map((s, i) => {
           const v = PHRASE_STYLES[i % PHRASE_STYLES.length];
           return (
@@ -287,9 +315,12 @@ function PhraseScatter() {
                 fontStyle: v.fontStyle,
                 color: v.color,
                 lineHeight: 1.25,
-                cursor: "default",
+                cursor: "pointer",
                 whiteSpace: "normal",
                 wordBreak: "break-word",
+                opacity: visible ? 1 : 0,
+                transform: visible ? "translateY(0)" : "translateY(14px)",
+                transition: `opacity var(--dur-base) var(--ease-reveal) ${i * 45}ms, transform var(--dur-base) var(--ease-reveal) ${i * 45}ms`,
               }}
             />
           );
@@ -299,10 +330,12 @@ function PhraseScatter() {
   }
 
   return (
-    <div style={{ position: "relative", minHeight: "331px" }}>
+    <div ref={ref} style={{ position: "relative", minHeight: "331px" }}>
       {phrases.map((s, i) => {
         const v = PHRASE_STYLES[i % PHRASE_STYLES.length];
         const p = PHRASE_POSITIONS[i % PHRASE_POSITIONS.length];
+        const restingTransform = p.transform ? `${p.transform} translateY(0)` : "translateY(0)";
+        const hiddenTransform = p.transform ? `${p.transform} translateY(14px)` : "translateY(14px)";
         return (
           <ScrambleText
             key={s.heading}
@@ -312,7 +345,7 @@ function PhraseScatter() {
               position: "absolute",
               top: p.top,
               left: p.left,
-              transform: p.transform,
+              transform: visible ? restingTransform : hiddenTransform,
               display: "inline-block",
               maxWidth: v.maxWidth,
               fontFamily: "'Libre Baskerville', serif",
@@ -321,9 +354,11 @@ function PhraseScatter() {
               fontStyle: v.fontStyle,
               color: v.color,
               lineHeight: 1.15,
-              cursor: "default",
+              cursor: "pointer",
               whiteSpace: "normal",
               wordBreak: "break-word",
+              opacity: visible ? 1 : 0,
+              transition: `opacity var(--dur-base) var(--ease-reveal) ${i * 45}ms, transform var(--dur-base) var(--ease-reveal) ${i * 45}ms`,
             }}
           />
         );
@@ -348,7 +383,7 @@ function TracedIcon({ Icon, size, hovered }: { Icon: IconComponent; size: number
       el.setAttribute("pathLength", "100");
       const style = (el as unknown as SVGElement).style;
       style.strokeDasharray = "100";
-      style.transition = "stroke-dashoffset 1.4s cubic-bezier(.22,1,.36,1)";
+      style.transition = "stroke-dashoffset 1.4s var(--ease-reveal)";
       style.strokeDashoffset = hovered ? "0" : "100";
     });
   }, [hovered]);
@@ -374,12 +409,13 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       style={{
         opacity: visible ? (project.active ? 1 : 0.35) : 0,
         transform: visible ? "translateY(0)" : "translateY(28px)",
-        transition: `opacity 0.55s ease ${index * 55}ms, transform 0.55s ease ${index * 55}ms`,
+        transition: `opacity var(--dur-base) var(--ease-reveal) ${80 + index * 55}ms, transform var(--dur-base) var(--ease-reveal) ${80 + index * 55}ms`,
         position: "relative",
         filter: project.active ? "none" : "saturate(0.3)",
       }}
       onMouseEnter={() => { if (project.active && !isMobile) setHovered(true); }}
       onMouseLeave={() => setHovered(false)}
+      onClick={() => { if (project.active && isMobile) setHovered((v) => !v); }}
     >
       {/* Tile */}
       <div style={{
@@ -405,9 +441,28 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             <TracedIcon Icon={ProjectIcon} size={46} hovered={hovered} />
           </div>
 
-          {/* Hover popup — desktop only, slides out from the icon's right edge */}
-          {project.active && !isMobile && (
-            <div style={{
+          {/* Popup — slides out from the icon's right edge on desktop hover;
+              drops below the icon on mobile tap, since a right-edge popup
+              would overflow the viewport from the grid's right column. */}
+          {project.active && (
+            <div style={isMobile ? {
+              position: "absolute",
+              top: "calc(100% + 8px)",
+              left: "50%",
+              zIndex: 50,
+              width: "min(210px, 78vw)",
+              transform: hovered ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(-10px)",
+              opacity: hovered ? 1 : 0,
+              pointerEvents: hovered ? "auto" : "none",
+              transition: "opacity var(--dur-base) var(--ease-response), transform var(--dur-base) var(--ease-reveal)",
+              background: "rgba(255,255,255,0.92)",
+              backdropFilter: "blur(28px)",
+              WebkitBackdropFilter: "blur(28px)",
+              border: "1px solid rgba(255,255,255,0.6)",
+              borderRadius: 20,
+              overflow: "hidden",
+              boxShadow: "0 12px 48px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.95)",
+            } : {
               position: "absolute",
               top: "50%",
               left: "calc(100% + 4px)",
@@ -416,7 +471,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
               transform: hovered ? "translateY(-50%) translateX(0)" : "translateY(-50%) translateX(-14px)",
               opacity: hovered ? 1 : 0,
               pointerEvents: hovered ? "auto" : "none",
-              transition: "opacity 0.3s ease, transform 0.45s cubic-bezier(.22,1,.36,1)",
+              transition: "opacity var(--dur-base) var(--ease-response), transform var(--dur-base) var(--ease-reveal)",
               background: "rgba(255,255,255,0.92)",
               backdropFilter: "blur(28px)",
               WebkitBackdropFilter: "blur(28px)",
@@ -466,7 +521,7 @@ function HoverWord({ text }: { text: string }) {
       style={{
         display: "inline-block",
         letterSpacing: hovered ? "0.02em" : "-0.02em",
-        transition: "letter-spacing 0.4s cubic-bezier(.22,1,.36,1)",
+        transition: "letter-spacing var(--dur-base) var(--ease-response)",
       }}
     >
       {text}
@@ -673,7 +728,7 @@ function ThoughtCard({ index, te }: { index: number; te: ThoughtExperiment }) {
             fontSize: "14px",
             color: "#bbb",
             transform: expanded ? "rotate(45deg)" : "rotate(0deg)",
-            transition: "transform 0.35s ease",
+            transition: "transform var(--dur-base) var(--ease-response)",
           }}>
             +
           </span>
@@ -689,35 +744,52 @@ function ThoughtCard({ index, te }: { index: number; te: ThoughtExperiment }) {
           justifyContent: "space-between",
           padding: "0 20px",
           transform: hovered ? "translateX(-100%)" : "translateX(0)",
-          transition: "transform 0.5s cubic-bezier(.65,0,.35,1)",
+          transition: "transform 0.5s var(--ease-response)",
         }}>
           <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "14px", fontWeight: 700, color: "#fff" }}>{te.question}</span>
           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>{num}</span>
         </div>
       </div>
 
-      {/* Flowchart panel */}
+      {/* Flowchart panel — stages cascade in one after another on open
+          (each stage its own opacity/translateY delay) so the reveal
+          matches what the copy claims: walking the question through each
+          step, not dumping all five at once. Collapsing skips the cascade
+          (delay 0) since a staggered close reads as sluggish, not narrative. */}
       <div style={{
         maxHeight: expanded ? "1000px" : "0px",
         opacity: expanded ? 1 : 0,
         overflow: "hidden",
         background: "#fafafa",
-        transition: "max-height 0.6s cubic-bezier(.22,1,.36,1), opacity 0.4s ease",
+        transition: `max-height var(--dur-section) var(--ease-reveal), opacity var(--dur-base) var(--ease-reveal)`,
       }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "32px 20px" }}>
-          {FLOW_STAGES.map((stage, i) => (
-            <div key={stage.key} style={{ width: "100%", maxWidth: "540px", textAlign: "center" }}>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "10px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px" }}>
-                {stage.label}
-              </p>
-              <p style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", color: "#111", lineHeight: 1.55 }}>
-                {te[stage.key]}
-              </p>
-              {i < FLOW_STAGES.length - 1 && (
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "16px", color: "#ccc", margin: "14px 0" }}>↓</div>
-              )}
-            </div>
-          ))}
+          {FLOW_STAGES.map((stage, i) => {
+            const stageDelay = expanded ? 150 + i * 90 : 0;
+            return (
+              <div
+                key={stage.key}
+                style={{
+                  width: "100%",
+                  maxWidth: "540px",
+                  textAlign: "center",
+                  opacity: expanded ? 1 : 0,
+                  transform: expanded ? "translateY(0)" : "translateY(10px)",
+                  transition: `opacity var(--dur-base) var(--ease-reveal) ${stageDelay}ms, transform var(--dur-base) var(--ease-reveal) ${stageDelay}ms`,
+                }}
+              >
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "10px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px" }}>
+                  {stage.label}
+                </p>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", color: "#111", lineHeight: 1.55 }}>
+                  {te[stage.key]}
+                </p>
+                {i < FLOW_STAGES.length - 1 && (
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "16px", color: "#ccc", margin: "14px 0" }}>↓</div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -733,14 +805,14 @@ type ScanStatus = "idle" | "scanning" | "flash" | "complete";
 
 const resumeData = {
   name: "Tanishaa Sinha",
-  title: "Product Thinker & Consumer Researcher", // TODO: confirm tagline
+  title: "Software Engineer", // TODO: confirm tagline
   experience: [
-    { role: "Product Research Intern", org: "TODO — Company", period: "TODO — Dates", blurb: "Studied user behaviour across onboarding flows and synthesised findings into design briefs." }, // TODO: replace with real role
-    { role: "Content & Strategy", org: "TODO — Company", period: "TODO — Dates", blurb: "Built audience insight reports for consumer brands using qual/quant methods." }, // TODO: replace with real role
-    { role: "Writing & Editorial", org: "Self-directed", period: "TODO — Dates", blurb: "Explored how technology shapes everyday decisions and consumer perception." }, // TODO: replace with real role
+    { role: "Software Engineer II", org: "Dell Technologies", period: "Aug'24 — Current", blurb: "Created enterprise grade microservices , automation scripts , and lots of errors." }, // TODO: replace with real role
+    { role: "Winter/Summer Intern", org: "Dell Technologies", period: "May '23 — May '24", blurb: "Did data analysis and automated testing to ensure smooth workflows" }, // TODO: replace with real role
+    { role: "Writing & Editorial Freelancer", org: "Markovate", period: "TODO — Dates", blurb: "Explored writing technical articles " }, // TODO: replace with real role
   ],
-  skills: ["User Research", "Product Thinking", "Writing", "Figma", "Systems Design", "Consumer Behaviour"], // TODO: replace
-  education: { degree: "TODO — Degree", school: "TODO — University", period: "TODO — Year" }, // TODO: replace
+  skills: ["Python", "REST APIs", "SQL", "React.JS", "Automation Workflows", "Distributed Systems", "CI/CD", "Data Visualisation", "LLM/RAG Applications"], // TODO: replace
+  education: { degree: "Computer Science And Engineering", school: "Manipal University Jaipur", period: "2020 — 2024" }, // TODO: replace
 };
 
 const CORNER_TICKS: React.CSSProperties[] = [
@@ -794,7 +866,7 @@ function Reveal({ delay = 0, scale = false, children }: { delay?: number; scale?
     <div style={{
       opacity: shown ? 1 : 0,
       transform: shown ? (scale ? "scale(1)" : "translateX(0)") : (scale ? "scale(0.7)" : "translateX(-36px)"),
-      transition: "opacity 0.5s ease, transform 0.5s cubic-bezier(.22,1,.36,1)",
+      transition: "opacity var(--dur-base) var(--ease-reveal), transform var(--dur-base) var(--ease-reveal)",
       display: scale ? "inline-block" : "block",
     }}>
       {children}
@@ -940,7 +1012,7 @@ function ResumeScanner() {
 function RevealSection({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   const { ref, visible } = useReveal();
   return (
-    <div ref={ref} style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(32px)", transition: `opacity 0.6s ease ${delay}ms, transform 0.6s ease ${delay}ms` }}>
+    <div ref={ref} style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(32px)", transition: `opacity var(--dur-section) var(--ease-reveal) ${delay}ms, transform var(--dur-section) var(--ease-reveal) ${delay}ms` }}>
       {children}
     </div>
   );
@@ -949,6 +1021,7 @@ function RevealSection({ children, delay = 0 }: { children: React.ReactNode; del
 /* ─── App ───────────────────────────────────────────────── */
 
 export default function App() {
+  const navVisible = useNavVisible();
   return (
     <div style={{ background: "#fff", minHeight: "100vh", fontFamily: "Inter, sans-serif" }}>
       <style>{`
@@ -967,7 +1040,7 @@ export default function App() {
           text-decoration-color: transparent;
           text-decoration-thickness: 1px;
           text-underline-offset: 8px;
-          transition: opacity 0.18s ease, text-decoration-color 0.18s ease;
+          transition: opacity var(--dur-micro) var(--ease-response), text-decoration-color var(--dur-micro) var(--ease-response);
         }
         .name-word:hover {
           opacity: 0.58;
@@ -977,7 +1050,7 @@ export default function App() {
           display: flex;
           align-items: center;
           color: #aaa;
-          transition: color 0.15s ease;
+          transition: color var(--dur-micro) var(--ease-response);
         }
         .nav-icon:hover { color: #111; }
         @keyframes blink {
@@ -1044,11 +1117,14 @@ export default function App() {
           color: #111;
           border: 1px solid #111;
           cursor: pointer;
-          transition: background 0.2s ease, color 0.2s ease;
+          transition: background var(--dur-micro) var(--ease-response), color var(--dur-micro) var(--ease-response), transform var(--dur-micro) var(--ease-response);
         }
         .scan-btn:hover:not(:disabled) {
           background: #111;
           color: #fff;
+        }
+        .scan-btn:active:not(:disabled) {
+          transform: scale(0.96);
         }
         .scan-btn:disabled {
           color: #bbb;
@@ -1065,9 +1141,10 @@ export default function App() {
           border: none;
           cursor: pointer;
           padding: 0;
-          transition: color 0.2s ease;
+          transition: color var(--dur-micro) var(--ease-response), transform var(--dur-micro) var(--ease-response);
         }
         .scan-reset-btn:hover { color: #111; }
+        .scan-reset-btn:active { transform: scale(0.94); }
       `}</style>
 
       {/* ── Nav ── */}
@@ -1079,6 +1156,8 @@ export default function App() {
         backdropFilter: "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",
         borderBottom: "1px solid rgba(0,0,0,0.05)",
+        transform: navVisible ? "translateY(0)" : "translateY(-100%)",
+        transition: "transform var(--dur-base) var(--ease-response)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
           {socials.map(({ icon: Icon, label, href }) => (
@@ -1102,28 +1181,38 @@ export default function App() {
           </defs>
         </svg>
         <div className="hero-grid">
-          {/* LEFT — name, subheading, dynamic reveal text */}
-          <div style={{ animation: "heroIn 0.8s cubic-bezier(.22,1,.36,1) forwards", display: "flex", flexDirection: "column" }}>
-            <HeroName />
-            <p style={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: "clamp(14px, 2.1vw, 19px)",
-              fontWeight: 400,
-              color: "#888",
-              maxWidth: "560px",
-              lineHeight: 1.55,
-            }}>
-              A consumer trying to understand consumers — while exploring the black box known as technology.
-            </p>
+          {/* LEFT — name, subheading, dynamic reveal text. Each cascades in
+              after the last (0 / 120 / 220ms) instead of fading as one
+              block, so the hero reads as a sequence — name first, then
+              context, then the voice that keeps going — rather than a
+              single blob that happens to contain three different things. */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ opacity: 0, animation: "heroIn 0.6s var(--ease-reveal) 0ms forwards" }}>
+              <HeroName />
+            </div>
+            <div style={{ opacity: 0, animation: "heroIn 0.6s var(--ease-reveal) 120ms forwards" }}>
+              <p style={{
+                fontFamily: "Inter, sans-serif",
+                fontSize: "clamp(14px, 2.1vw, 19px)",
+                fontWeight: 400,
+                color: "#888",
+                maxWidth: "560px",
+                lineHeight: 1.55,
+              }}>
+                A consumer trying to understand consumers — while exploring the black box known as technology.
+              </p>
+            </div>
             {/* TODO: placeholder text, to be replaced */}
-            <Typewriter text="hi , I like to understand how things and people work , create workflows to make lives (or atleast my life) easier and try out things which expand my mind . I am super interested in how products are built, how they influence behaviour, and what happens behind-the-scenes most people never see. take a look around!" />
+            <div style={{ opacity: 0, animation: "heroIn 0.6s var(--ease-reveal) 220ms forwards", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+              <Typewriter text="hi , I like to understand how things and people work , create workflows to make lives (or atleast my life) easier and try out things which expand my mind . I am super interested in how products are built, how they influence behaviour, and what happens behind-the-scenes most people never see. take a look around!" />
+            </div>
           </div>
 
           {/* RIGHT — projects, 2 × 3 */}
           <div style={{ marginTop: "24px" }}>
-            <RevealSection>
+            <RevealSection delay={40}>
               <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "16px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
-                Projects
+                What I've Built
               </p>
             </RevealSection>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}
@@ -1137,11 +1226,17 @@ export default function App() {
       </section>
 
       {/* ── Resume ── */}
+      {/* Label and content reveal as two beats, not one blob — the label
+          arrives, then the scanner follows, same lead-in used for every
+          other section so scrolling into a new part of the page always
+          reads as "heading, then what it's a heading for." */}
       <section style={{ padding: "0 24px 96px", width: "100%" }}>
         <RevealSection>
           <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "16px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
-            Resume
+            What I've Done
           </p>
+        </RevealSection>
+        <RevealSection delay={100}>
           <ResumeScanner />
         </RevealSection>
       </section>
@@ -1150,18 +1245,24 @@ export default function App() {
       <section style={{ padding: "0 24px 96px", width: "100%" }}>
         <RevealSection>
           <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "16px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
-            About
+            Who I Am
           </p>
-          <PhraseScatter />
-          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "16px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: "56px", marginBottom: "20px" }}>
-            Thought Experiments
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {thoughtExperiments.map((te, i) => (
-              <ThoughtCard key={te.id} index={i + 1} te={te} />
-            ))}
-          </div>
         </RevealSection>
+        <RevealSection delay={100}>
+          <PhraseScatter />
+        </RevealSection>
+        <RevealSection>
+          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "16px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: "56px", marginBottom: "20px" }}>
+            How do I think
+          </p>
+        </RevealSection>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {thoughtExperiments.map((te, i) => (
+            <RevealSection key={te.id} delay={i * 70}>
+              <ThoughtCard index={i + 1} te={te} />
+            </RevealSection>
+          ))}
+        </div>
       </section>
 
       {/* ── Footer ── */}

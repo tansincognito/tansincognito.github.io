@@ -5,6 +5,13 @@
   --foreground: #111111;
   --border: rgba(60, 60, 67, 0.12);
   --muted-foreground: #8e8e93;
+
+  /* Motion tokens: reveal = things arriving (scroll/mount), response = direct feedback (hover/press) */
+  --ease-reveal: cubic-bezier(.22,1,.36,1);
+  --ease-response: cubic-bezier(.65,0,.35,1);
+  --dur-micro: 180ms;
+  --dur-base: 450ms;
+  --dur-section: 650ms;
 }
 
 @layer base {
