@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
 import {
   Github,
   Twitter,
@@ -11,7 +11,10 @@ import {
   BarChart2,
   Layers,
   Code2,
+  Play,
 } from "lucide-react";
+
+const WireframeBrain = lazy(() => import("./WireframeBrain"));
 
 /* ─── types ─────────────────────────────────────────────── */
 
@@ -74,40 +77,6 @@ const projects: Project[] = [
   { id: "p4", name: "Coming Soon", tagline: "", description: "", stack: [], gradient: { from: "#43e97b", to: "#38f9d7" }, Icon: Zap,      github: "#", live: "#", active: false },
   { id: "p5", name: "Coming Soon", tagline: "", description: "", stack: [], gradient: { from: "#667eea", to: "#764ba2" }, Icon: BarChart2, github: "#", live: "#", active: false },
   { id: "p6", name: "Coming Soon", tagline: "", description: "", stack: [], gradient: { from: "#f093fb", to: "#f5576c" }, Icon: Layers,   github: "#", live: "#", active: false },
-];
-
-const thoughtExperiments = [
-  // TODO: replace question + each flowchart stage with real content
-  {
-    id: "te-1",
-    question: "Why does most B2B onboarding fail in the first five minutes?",
-    badge: "Product",
-    firstPrinciples: "Users don't read — they scan for the fastest path to value.",
-    possibleExplanations: "Onboarding is usually built around the product team's mental model, not the user's.",
-    counterArguments: "Some of that drop-off is just poor product-market fit, not a UX problem.",
-    conclusion: "Cut every step that doesn't map directly to the user's first real 'aha' moment.",
-    openQuestions: "How do you measure the 'aha' moment before it's already happened?",
-  },
-  {
-    id: "te-2",
-    question: "Why build a Chrome extension nobody asked for?",
-    badge: "Build",
-    firstPrinciples: "The best way to understand a workflow is to try to automate it yourself.",
-    possibleExplanations: "Existing tools solve the general case, not the specific friction I actually feel.",
-    counterArguments: "Building for an audience of one rarely generalises into something others want.",
-    conclusion: "Ship it anyway — the learning compounds even if the tool doesn't.",
-    openQuestions: "At what point does a personal tool become worth polishing for other people?",
-  },
-  {
-    id: "te-3",
-    question: "What does travel-planning software get wrong?",
-    badge: "Notes",
-    firstPrinciples: "Planning a trip is a group decision problem before it's a logistics problem.",
-    possibleExplanations: "Most tools optimise for a single planner, not for consensus among a group.",
-    counterArguments: "Group consensus tools add friction that solo planners don't want to pay for.",
-    conclusion: "Default to solo-friendly, make group mode an explicit, opt-in layer on top.",
-    openQuestions: "Can one interface serve both modes without feeling like two different products?",
-  },
 ];
 
 const socials = [
@@ -183,6 +152,39 @@ function useNavVisible() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   return visible;
+}
+
+/* Tracks how far the hero has scrolled past, as a 0→1 progress value:
+   0 at the top of the page, 1 once the hero's bottom has reached the
+   viewport top. Drives the hero "door" split and the résumé scanner's
+   scroll-linked enlarge, so both react to the same physical scroll
+   distance instead of drifting out of sync. */
+function useHeroScrollProgress(heroRef: React.RefObject<HTMLElement>) {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    let ticking = false;
+    const compute = () => {
+      ticking = false;
+      const el = heroRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const p = -rect.top / rect.height;
+      setProgress(Math.min(1, Math.max(0, p)));
+    };
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(compute);
+    };
+    compute();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [heroRef]);
+  return progress;
 }
 
 function useIsMobile() {
@@ -291,13 +293,13 @@ const PHRASE_POSITIONS: { top: string; left: string; transform?: string }[] = [
   { top: "calc(65% + 9px)", left: "50%", transform: "translateX(-50%)" },
 ];
 
-function PhraseScatter() {
+function PhraseScatter({ stacked = false }: { stacked?: boolean }) {
   const isMobile = useIsMobile();
   const { ref, visible } = useReveal();
   const phrases = [...panelContent.tanishaa.sections, ...panelContent.sinha.sections, ...EXTRA_PHRASES]
     .filter((s) => !OMITTED_HEADINGS.has(s.heading));
 
-  if (isMobile) {
+  if (isMobile || stacked) {
     return (
       <div ref={ref} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
         {phrases.map((s, i) => {
@@ -363,6 +365,48 @@ function PhraseScatter() {
           />
         );
       })}
+    </div>
+  );
+}
+
+/* ─── VideoPlaceholder ──────────────────────────────────── */
+/* Reserves the video's spot in "Who I Am" — same corner-tick frame
+   language as the résumé scanner's ghost document, so an empty media slot
+   still reads as an intentional part of the design system rather than a
+   placeholder that slipped through. */
+
+function VideoPlaceholder() {
+  const { ref, visible } = useReveal();
+  return (
+    <div
+      ref={ref}
+      style={{
+        position: "relative",
+        width: "100%",
+        aspectRatio: "4 / 5",
+        background: "#f9f9f9",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(28px)",
+        transition: "opacity var(--dur-section) var(--ease-reveal), transform var(--dur-section) var(--ease-reveal)",
+      }}
+    >
+      {CORNER_TICKS.map((c, i) => (
+        <div key={i} style={{ position: "absolute", width: "14px", height: "14px", ...c }} />
+      ))}
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "14px" }}>
+        <div style={{
+          width: "56px",
+          height: "56px",
+          borderRadius: "50%",
+          border: "1.5px solid #ccc",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}>
+          <Play size={20} color="#bbb" strokeWidth={1.8} fill="#bbb" />
+        </div>
+        <p style={RESUME_LABEL_STYLE}>Video — coming soon</p>
+      </div>
     </div>
   );
 }
@@ -564,6 +608,130 @@ const HIGHLIGHT_PHRASES = [
   { text: "how products are built", color: "#E1D7F5" }, // lavender
 ];
 
+/* ─── closing-line highlight words ─────────────────────── */
+/* Same pastel bleed-through underline as the hero typewriter's highlighted
+   phrases, as the shared base — each of the three closing words then
+   layers its own hover behavior on top: code flips to binary, cognition
+   grows a little connective network over its letters, curiosity stacks
+   descending "Why?"s beneath it. */
+
+const HIGHLIGHT_BASE: React.CSSProperties = {
+  fontWeight: 600,
+  color: "#111",
+  backgroundRepeat: "no-repeat",
+  backgroundSize: "100% 9px",
+  backgroundPosition: "0 92%",
+  position: "relative",
+  display: "inline-block",
+  cursor: "default",
+};
+
+function binaryEncode(text: string) {
+  return text.split("").map((ch) => ch.charCodeAt(0).toString(2).padStart(8, "0")).join(" ");
+}
+
+function CodeHighlight({ text, color }: { text: string; color: string }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <span
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        ...HIGHLIGHT_BASE,
+        backgroundImage: `linear-gradient(${color}, ${color})`,
+        fontFamily: hovered ? "'DM Mono', monospace" : "inherit",
+        fontSize: hovered ? "0.62em" : "inherit",
+        letterSpacing: hovered ? "0.02em" : "normal",
+      }}
+    >
+      {hovered ? binaryEncode(text) : text}
+    </span>
+  );
+}
+
+function CognitionHighlight({ text, color }: { text: string; color: string }) {
+  const [hovered, setHovered] = useState(false);
+  const letters = text.split("");
+  const n = letters.length;
+  const points = letters.map((_, i) => ({ x: ((i + 0.5) / n) * 100, y: i % 2 === 0 ? 15 : 85 }));
+  const lines: [number, number][] = [];
+  for (let i = 0; i < n - 1; i++) lines.push([i, i + 1]);
+  for (let i = 0; i < n - 2; i += 2) lines.push([i, i + 2]);
+
+  return (
+    <span
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ ...HIGHLIGHT_BASE, backgroundImage: `linear-gradient(${color}, ${color})` }}
+    >
+      {hovered && (
+        <svg
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          style={{ position: "absolute", left: 0, right: 0, top: "-0.85em", width: "100%", height: "0.7em", overflow: "visible", pointerEvents: "none" }}
+        >
+          {lines.map(([a, b], i) => (
+            <line
+              key={i}
+              x1={points[a].x} y1={points[a].y}
+              x2={points[b].x} y2={points[b].y}
+              stroke={TERRACOTTA}
+              strokeWidth={1}
+              vectorEffect="non-scaling-stroke"
+              opacity={0.55}
+            />
+          ))}
+          {points.map((p, i) => (
+            <circle key={i} cx={p.x} cy={p.y} r={2.2} fill={TERRACOTTA} vectorEffect="non-scaling-stroke" />
+          ))}
+        </svg>
+      )}
+      {text}
+    </span>
+  );
+}
+
+const WHY_STACK = ["Why?", "Why?", "Why?", "Why?"];
+
+function CuriosityHighlight({ text, color }: { text: string; color: string }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <span
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ ...HIGHLIGHT_BASE, backgroundImage: `linear-gradient(${color}, ${color})` }}
+    >
+      {text}
+      {hovered && (
+        <span style={{
+          position: "absolute",
+          top: "100%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "2px",
+          paddingTop: "8px",
+          pointerEvents: "none",
+        }}>
+          {WHY_STACK.map((w, i) => (
+            <span key={i} style={{
+              fontFamily: "'DM Mono', monospace",
+              fontSize: `${14 - i * 2.2}px`,
+              opacity: 1 - i * 0.2,
+              color: "#999",
+              whiteSpace: "nowrap",
+            }}>
+              {w}
+            </span>
+          ))}
+        </span>
+      )}
+    </span>
+  );
+}
+
 function buildHighlightSegments(text: string) {
   const matches: { start: number; end: number; color: string }[] = [];
   HIGHLIGHT_PHRASES.forEach(({ text: phrase, color }) => {
@@ -641,157 +809,6 @@ function Typewriter({ text }: { text: string }) {
         {renderTyped(segments, typed.length)}
         {!finished && <span className="typewriter-cursor">|</span>}
       </p>
-    </div>
-  );
-}
-
-/* ─── ThoughtCard ───────────────────────────────────────── */
-/* Drawer pattern up top (unchanged): a dark face shows title + index at
-   rest, sliding off to the left on hover to reveal a teaser underneath.
-   Clicking the card toggles a flowchart panel below it that walks the
-   question through First Principles → Possible Explanations → Counter
-   Arguments → My Conclusion → Open Questions. */
-
-type ThoughtExperiment = typeof thoughtExperiments[number];
-
-const FLOW_STAGES: { key: keyof ThoughtExperiment; label: string }[] = [
-  { key: "question", label: "Question" },
-  { key: "firstPrinciples", label: "First Principles" },
-  { key: "possibleExplanations", label: "Possible Explanations" },
-  { key: "counterArguments", label: "Counter Arguments" },
-  { key: "conclusion", label: "My Conclusion" },
-  { key: "openQuestions", label: "Open Questions" },
-];
-
-function ThoughtCard({ index, te }: { index: number; te: ThoughtExperiment }) {
-  const [hovered, setHovered] = useState(false);
-  const [expanded, setExpanded] = useState(false);
-  const num = String(index).padStart(2, "0");
-  return (
-    <div>
-      <div
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        onClick={() => setExpanded((v) => !v)}
-        style={{
-          position: "relative",
-          height: "76px",
-          borderRadius: 0,
-          overflow: "hidden",
-          background: "#f7f7f7",
-          cursor: "pointer",
-        }}
-      >
-        {/* Revealed content — always underneath */}
-        <div style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: "16px",
-          padding: "0 20px",
-        }}>
-          <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "20px", fontWeight: 700, color: "#e2e2e2", flexShrink: 0 }}>
-            {num}
-          </span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "14px", fontWeight: 700, color: "#111", marginBottom: "3px" }}>{te.question}</p>
-            <p style={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: "12px",
-              color: "#888",
-              lineHeight: 1.4,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}>
-              {te.firstPrinciples}
-            </p>
-          </div>
-          <span style={{
-            flexShrink: 0,
-            fontFamily: "'DM Mono', monospace",
-            fontSize: "9px",
-            fontWeight: 600,
-            color: TERRACOTTA,
-            background: `${TERRACOTTA}1c`,
-            padding: "3px 9px",
-            borderRadius: 999,
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-          }}>
-            {te.badge}
-          </span>
-          <span style={{
-            flexShrink: 0,
-            fontFamily: "'DM Mono', monospace",
-            fontSize: "14px",
-            color: "#bbb",
-            transform: expanded ? "rotate(45deg)" : "rotate(0deg)",
-            transition: "transform var(--dur-base) var(--ease-response)",
-          }}>
-            +
-          </span>
-        </div>
-
-        {/* Dark face — default state, slides off to the left on hover */}
-        <div style={{
-          position: "absolute",
-          inset: 0,
-          background: "#111",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 20px",
-          transform: hovered ? "translateX(-100%)" : "translateX(0)",
-          transition: "transform 0.5s var(--ease-response)",
-        }}>
-          <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "14px", fontWeight: 700, color: "#fff" }}>{te.question}</span>
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>{num}</span>
-        </div>
-      </div>
-
-      {/* Flowchart panel — stages cascade in one after another on open
-          (each stage its own opacity/translateY delay) so the reveal
-          matches what the copy claims: walking the question through each
-          step, not dumping all five at once. Collapsing skips the cascade
-          (delay 0) since a staggered close reads as sluggish, not narrative. */}
-      <div style={{
-        maxHeight: expanded ? "1000px" : "0px",
-        opacity: expanded ? 1 : 0,
-        overflow: "hidden",
-        background: "#fafafa",
-        transition: `max-height var(--dur-section) var(--ease-reveal), opacity var(--dur-base) var(--ease-reveal)`,
-      }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "32px 20px" }}>
-          {FLOW_STAGES.map((stage, i) => {
-            const stageDelay = expanded ? 150 + i * 90 : 0;
-            return (
-              <div
-                key={stage.key}
-                style={{
-                  width: "100%",
-                  maxWidth: "540px",
-                  textAlign: "center",
-                  opacity: expanded ? 1 : 0,
-                  transform: expanded ? "translateY(0)" : "translateY(10px)",
-                  transition: `opacity var(--dur-base) var(--ease-reveal) ${stageDelay}ms, transform var(--dur-base) var(--ease-reveal) ${stageDelay}ms`,
-                }}
-              >
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "10px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px" }}>
-                  {stage.label}
-                </p>
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", color: "#111", lineHeight: 1.55 }}>
-                  {te[stage.key]}
-                </p>
-                {i < FLOW_STAGES.length - 1 && (
-                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "16px", color: "#ccc", margin: "14px 0" }}>↓</div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 }
@@ -884,11 +901,28 @@ const RESUME_LABEL_STYLE: React.CSSProperties = {
   marginBottom: "10px",
 };
 
-function ResumeScanner() {
+function ResumeScanner({ scale = 1 }: { scale?: number }) {
   const [status, setStatus] = useState<ScanStatus>("idle");
   const [runId, setRunId] = useState(0);
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const isMobile = useIsMobile();
+
+  // Measures this element's own (untransformed) layout height — CSS
+  // transforms don't change offsetHeight/ResizeObserver's contentRect, so
+  // this stays the "natural" size even while `scale` visually enlarges it.
+  // The gap that opens up below the natural box as scale grows is reserved
+  // via marginBottom, so the enlarged scanner never overlaps the next
+  // section instead of just visually overflowing into it.
+  const scannerRef = useRef<HTMLDivElement>(null);
+  const [naturalHeight, setNaturalHeight] = useState(0);
+
+  useEffect(() => {
+    const el = scannerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => setNaturalHeight(entry.contentRect.height));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const runScan = () => {
     timeoutsRef.current.forEach(clearTimeout);
@@ -900,11 +934,27 @@ function ResumeScanner() {
     ];
   };
 
+  const resetScan = () => {
+    timeoutsRef.current.forEach(clearTimeout);
+    setStatus("idle");
+  };
+
   useEffect(() => () => timeoutsRef.current.forEach(clearTimeout), []);
 
   return (
-    <div className="hero-grid">
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px", marginLeft: isMobile ? 0 : "20%" }}>
+    <div
+      ref={scannerRef}
+      className="hero-grid"
+      style={{
+        maxWidth: "720px",
+        margin: "0 auto",
+        marginBottom: isMobile ? 0 : `${naturalHeight * (scale - 1)}px`,
+        transform: isMobile ? "none" : `scale(${scale})`,
+        transformOrigin: "top center",
+        transition: "transform 0.05s linear",
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" }}>
         <GhostDocument status={status} />
         <button
           className="scan-btn"
@@ -916,7 +966,7 @@ function ResumeScanner() {
           {status === "complete" && "✓ extracted"}
         </button>
         {status === "complete" && (
-          <button className="scan-reset-btn" onClick={runScan}>Reset</button>
+          <button className="scan-reset-btn" onClick={resetScan}>Reset</button>
         )}
       </div>
 
@@ -1022,6 +1072,9 @@ function RevealSection({ children, delay = 0 }: { children: React.ReactNode; del
 
 export default function App() {
   const navVisible = useNavVisible();
+  const heroRef = useRef<HTMLElement>(null);
+  const heroProgress = useHeroScrollProgress(heroRef);
+  const resumeScale = (0.82 + heroProgress * 0.18) * 1.4;
   return (
     <div style={{ background: "#fff", minHeight: "100vh", fontFamily: "Inter, sans-serif" }}>
       <style>{`
@@ -1169,7 +1222,7 @@ export default function App() {
       </nav>
 
       {/* ── Hero + Projects ── */}
-      <section style={{ paddingTop: "120px", paddingBottom: "80px", paddingLeft: "24px", paddingRight: "24px", width: "100%" }}>
+      <section ref={heroRef} style={{ paddingTop: "120px", paddingBottom: "80px", paddingLeft: "24px", paddingRight: "24px", width: "100%" }}>
         <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
           <defs>
             {projects.map((p) => (
@@ -1186,7 +1239,16 @@ export default function App() {
               block, so the hero reads as a sequence — name first, then
               context, then the voice that keeps going — rather than a
               single blob that happens to contain three different things. */}
-          <div style={{ display: "flex", flexDirection: "column" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              transform: `translateX(${-heroProgress * 140}px)`,
+              opacity: 1 - heroProgress,
+              transition: "transform 0.05s linear, opacity 0.05s linear",
+              pointerEvents: heroProgress > 0.5 ? "none" : "auto",
+            }}
+          >
             <div style={{ opacity: 0, animation: "heroIn 0.6s var(--ease-reveal) 0ms forwards" }}>
               <HeroName />
             </div>
@@ -1209,9 +1271,17 @@ export default function App() {
           </div>
 
           {/* RIGHT — projects, 2 × 3 */}
-          <div style={{ marginTop: "24px" }}>
+          <div
+            style={{
+              marginTop: "24px",
+              transform: `translateX(${heroProgress * 140}px)`,
+              opacity: 1 - heroProgress,
+              transition: "transform 0.05s linear, opacity 0.05s linear",
+              pointerEvents: heroProgress > 0.5 ? "none" : "auto",
+            }}
+          >
             <RevealSection delay={40}>
-              <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "16px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
+              <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
                 What I've Built
               </p>
             </RevealSection>
@@ -1230,39 +1300,75 @@ export default function App() {
           arrives, then the scanner follows, same lead-in used for every
           other section so scrolling into a new part of the page always
           reads as "heading, then what it's a heading for." */}
-      <section style={{ padding: "0 24px 96px", width: "100%" }}>
-        <RevealSection>
-          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "16px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
-            What I've Done
-          </p>
-        </RevealSection>
+      <section style={{ position: "relative", padding: "0 24px 180px", width: "100%", minHeight: "70vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+        {/* Positioned on this plain wrapper, not RevealSection's own div —
+            RevealSection's transform would otherwise make its wrapper the
+            containing block for an absolutely positioned child, resolving
+            left/top against that tiny inline box instead of the section. */}
+        <div style={{ position: "absolute", left: "24px", top: "50%", transform: "translateY(-50%)" }}>
+          <RevealSection>
+            <p style={{
+              fontFamily: "'Chakra Petch', sans-serif",
+              fontSize: "22px",
+              fontWeight: 600,
+              color: "#bbb",
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+            }}>
+              What I've Done
+            </p>
+          </RevealSection>
+        </div>
         <RevealSection delay={100}>
-          <ResumeScanner />
+          <ResumeScanner scale={resumeScale} />
         </RevealSection>
       </section>
 
       {/* ── About ── */}
       <section style={{ padding: "0 24px 96px", width: "100%" }}>
         <RevealSection>
-          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "16px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
+          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
             Who I Am
           </p>
         </RevealSection>
-        <RevealSection delay={100}>
-          <PhraseScatter />
-        </RevealSection>
+        <div className="hero-grid">
+          <RevealSection delay={100}>
+            <PhraseScatter stacked />
+          </RevealSection>
+          <RevealSection delay={140}>
+            <VideoPlaceholder />
+          </RevealSection>
+        </div>
         <RevealSection>
-          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "16px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: "56px", marginBottom: "20px" }}>
+          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: "56px", marginBottom: "20px" }}>
             How do I think
           </p>
         </RevealSection>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {thoughtExperiments.map((te, i) => (
-            <RevealSection key={te.id} delay={i * 70}>
-              <ThoughtCard index={i + 1} te={te} />
-            </RevealSection>
-          ))}
-        </div>
+        <RevealSection delay={70}>
+          <Suspense fallback={<div style={{ width: "100%", maxWidth: "420px", aspectRatio: "1", margin: "12px auto 0" }} />}>
+            <WireframeBrain />
+          </Suspense>
+        </RevealSection>
+      </section>
+
+      {/* ── Closing line ── */}
+      <section style={{ padding: "0 24px 80px", width: "100%", textAlign: "center" }}>
+        <RevealSection>
+          <p style={{
+            fontFamily: "'Libre Baskerville', serif",
+            fontStyle: "italic",
+            fontSize: "clamp(20px, 3.4vw, 30px)",
+            color: "#111",
+            maxWidth: "720px",
+            margin: "0 auto",
+            lineHeight: 1.55,
+            letterSpacing: "0.015em",
+          }}>
+            In short, the goal is to max out in <CodeHighlight text="code" color="#FFDCC2" />,{" "}
+            <CognitionHighlight text="cognition" color="#C7F0DC" />, and{" "}
+            <CuriosityHighlight text="curiosity" color="#E1D7F5" />.
+          </p>
+        </RevealSection>
       </section>
 
       {/* ── Footer ── */}
