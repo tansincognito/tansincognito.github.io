@@ -11,7 +11,7 @@ import {
   BarChart2,
   Layers,
   Code2,
-  Play,
+  Cog,
 } from "lucide-react";
 
 const WireframeBrain = lazy(() => import("./WireframeBrain"));
@@ -369,13 +369,12 @@ function PhraseScatter({ stacked = false }: { stacked?: boolean }) {
   );
 }
 
-/* ─── VideoPlaceholder ──────────────────────────────────── */
-/* Reserves the video's spot in "Who I Am" — same corner-tick frame
-   language as the résumé scanner's ghost document, so an empty media slot
-   still reads as an intentional part of the design system rather than a
-   placeholder that slipped through. */
+/* ─── VideoEmbed ────────────────────────────────────────── */
+/* Same corner-tick frame language as the résumé scanner's ghost document,
+   now wrapping a real <video> — served from /public/videos so Vite copies
+   it as-is rather than bundling/hashing a 1MB asset through the JS graph. */
 
-function VideoPlaceholder() {
+function VideoEmbed() {
   const { ref, visible } = useReveal();
   return (
     <div
@@ -391,22 +390,14 @@ function VideoPlaceholder() {
       }}
     >
       {CORNER_TICKS.map((c, i) => (
-        <div key={i} style={{ position: "absolute", width: "14px", height: "14px", ...c }} />
+        <div key={i} style={{ position: "absolute", width: "14px", height: "14px", zIndex: 1, ...c }} />
       ))}
-      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "14px" }}>
-        <div style={{
-          width: "56px",
-          height: "56px",
-          borderRadius: "50%",
-          border: "1.5px solid #ccc",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}>
-          <Play size={20} color="#bbb" strokeWidth={1.8} fill="#bbb" />
-        </div>
-        <p style={RESUME_LABEL_STYLE}>Video — coming soon</p>
-      </div>
+      <video
+        src="/videos/myvideo.mp4"
+        controls
+        playsInline
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+      />
     </div>
   );
 }
@@ -592,15 +583,11 @@ function HeroName() {
   );
 }
 
-/* ─── Typewriter ────────────────────────────────────────── */
-/* One continuous, uniformly-styled block of text typed out character by
-   character — like watching someone type a long document. Lives in a
-   fixed-height panel that fills the remaining space next to the project
-   grid; as the text grows past the panel's height, it smooth-scrolls up
-   to keep the writing edge in view. A handful of key phrases get a thick
-   pastel underline drawn behind the text (not over it) as they're typed,
-   so the color bleeds through descenders and letter gaps like a
-   highlighter held low against the baseline. */
+/* ─── HeroText ──────────────────────────────────────────── */
+/* The full paragraph renders immediately (no typing effect) — only the
+   pastel underline beneath each highlighted phrase animates in, growing
+   left-to-right like a highlighter stroke, staggered phrase by phrase in
+   the order they appear in the text. */
 
 const HIGHLIGHT_PHRASES = [
   { text: "understand how things and people work", color: "#FFDCC2" }, // peach
@@ -610,10 +597,11 @@ const HIGHLIGHT_PHRASES = [
 
 /* ─── closing-line highlight words ─────────────────────── */
 /* Same pastel bleed-through underline as the hero typewriter's highlighted
-   phrases, as the shared base — each of the three closing words then
-   layers its own hover behavior on top: code flips to binary, cognition
-   grows a little connective network over its letters, curiosity stacks
-   descending "Why?"s beneath it. */
+   phrases, as the shared base — wider letter-spacing than body text and a
+   slight scale-up on hover apply to all three. Each word then layers its
+   own hover behavior on top: code prints "def code()" below itself,
+   cognition grows a small spinning gear over its first "i", curiosity
+   gets a red question mark in front of it. */
 
 const HIGHLIGHT_BASE: React.CSSProperties = {
   fontWeight: 600,
@@ -624,85 +612,78 @@ const HIGHLIGHT_BASE: React.CSSProperties = {
   position: "relative",
   display: "inline-block",
   cursor: "default",
+  letterSpacing: "0.04em",
+  transition: "transform 0.25s var(--ease-response)",
 };
-
-function binaryEncode(text: string) {
-  return text.split("").map((ch) => ch.charCodeAt(0).toString(2).padStart(8, "0")).join(" ");
-}
 
 function CodeHighlight({ text, color }: { text: string; color: string }) {
   const [hovered, setHovered] = useState(false);
+  const flankStyle: React.CSSProperties = {
+    display: "inline-block",
+    overflow: "hidden",
+    verticalAlign: "baseline",
+    fontFamily: "'DM Mono', monospace",
+    fontWeight: 400,
+    color: "#999",
+    transition: "max-width 0.25s ease, opacity 0.2s ease",
+  };
   return (
     <span
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{ ...HIGHLIGHT_BASE, backgroundImage: `linear-gradient(${color}, ${color})` }}
+      style={{
+        ...HIGHLIGHT_BASE,
+        backgroundImage: `linear-gradient(${color}, ${color})`,
+        transform: hovered ? "scale(1.08)" : "scale(1)",
+      }}
     >
+      <span style={{ ...flankStyle, maxWidth: hovered ? "2.6em" : "0px", opacity: hovered ? 1 : 0 }}>
+        def{" "}
+      </span>
       {text}
-      {hovered && (
-        <span style={{
-          position: "absolute",
-          top: "100%",
-          left: "50%",
-          transform: "translateX(-50%)",
-          whiteSpace: "nowrap",
-          fontFamily: "'DM Mono', monospace",
-          fontSize: "10px",
-          letterSpacing: "0.03em",
-          color: "#999",
-          paddingTop: "6px",
-          pointerEvents: "none",
-        }}>
-          {binaryEncode(text)}
-        </span>
-      )}
+      <span style={{ ...flankStyle, maxWidth: hovered ? "1.2em" : "0px", opacity: hovered ? 1 : 0 }}>
+        ()
+      </span>
     </span>
   );
 }
 
 function CognitionHighlight({ text, color }: { text: string; color: string }) {
   const [hovered, setHovered] = useState(false);
-  const letters = text.split("");
-  const n = letters.length;
-  const points = letters.map((_, i) => ({ x: ((i + 0.5) / n) * 100, y: i % 2 === 0 ? 15 : 85 }));
-  const lines: [number, number][] = [];
-  for (let i = 0; i < n - 1; i++) lines.push([i, i + 1]);
-  for (let i = 0; i < n - 2; i += 2) lines.push([i, i + 2]);
-
+  const oIndex = text.indexOf("o"); // the "o" in "c-o-gnition" — cog[wheel]nition
   return (
     <span
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{ ...HIGHLIGHT_BASE, backgroundImage: `linear-gradient(${color}, ${color})` }}
+      style={{
+        ...HIGHLIGHT_BASE,
+        backgroundImage: `linear-gradient(${color}, ${color})`,
+        transform: hovered ? "scale(1.08)" : "scale(1)",
+      }}
     >
-      {hovered && (
-        <svg
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-          style={{ position: "absolute", left: 0, right: 0, top: "-0.85em", width: "100%", height: "0.7em", overflow: "visible", pointerEvents: "none" }}
-        >
-          {lines.map(([a, b], i) => (
-            <line
-              key={i}
-              x1={points[a].x} y1={points[a].y}
-              x2={points[b].x} y2={points[b].y}
-              stroke={TERRACOTTA}
-              strokeWidth={1}
-              vectorEffect="non-scaling-stroke"
-              opacity={0.55}
+      {text.split("").map((ch, i) => {
+        if (i !== oIndex) return <span key={i}>{ch}</span>;
+        return (
+          <span key={i} style={{ position: "relative", display: "inline-block", width: "0.72em", height: "0.72em", verticalAlign: "-0.08em" }}>
+            <span style={{ position: "absolute", inset: 0, opacity: hovered ? 0 : 1, transition: "opacity 0.15s ease" }}>{ch}</span>
+            <Cog
+              size={11}
+              color={TERRACOTTA}
+              strokeWidth={2}
+              style={{
+                position: "absolute",
+                inset: 0,
+                opacity: hovered ? 1 : 0,
+                transition: "opacity 0.15s ease",
+                animation: hovered ? "spin-gear 1.1s linear infinite" : "none",
+              }}
             />
-          ))}
-          {points.map((p, i) => (
-            <circle key={i} cx={p.x} cy={p.y} r={2.2} fill={TERRACOTTA} vectorEffect="non-scaling-stroke" />
-          ))}
-        </svg>
-      )}
-      {text}
+          </span>
+        );
+      })}
     </span>
   );
 }
-
-const WHY_STACK = ["Why?", "Why?", "Why?", "Why?"];
 
 function CuriosityHighlight({ text, color }: { text: string; color: string }) {
   const [hovered, setHovered] = useState(false);
@@ -710,35 +691,26 @@ function CuriosityHighlight({ text, color }: { text: string; color: string }) {
     <span
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{ ...HIGHLIGHT_BASE, backgroundImage: `linear-gradient(${color}, ${color})` }}
+      style={{
+        ...HIGHLIGHT_BASE,
+        backgroundImage: `linear-gradient(${color}, ${color})`,
+        transform: hovered ? "scale(1.08)" : "scale(1)",
+      }}
     >
+      <span style={{
+        display: "inline-block",
+        color: "#D64545",
+        fontWeight: 700,
+        maxWidth: hovered ? "0.7em" : "0px",
+        marginRight: hovered ? "3px" : "0px",
+        opacity: hovered ? 1 : 0,
+        overflow: "hidden",
+        verticalAlign: "-0.15em",
+        transition: "max-width 0.25s ease, opacity 0.2s ease, margin-right 0.25s ease",
+      }}>
+        ?
+      </span>
       {text}
-      {hovered && (
-        <span style={{
-          position: "absolute",
-          top: "100%",
-          left: "50%",
-          transform: "translateX(-50%)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "2px",
-          paddingTop: "8px",
-          pointerEvents: "none",
-        }}>
-          {WHY_STACK.map((w, i) => (
-            <span key={i} style={{
-              fontFamily: "'DM Mono', monospace",
-              fontSize: `${14 - i * 2.2}px`,
-              opacity: 1 - i * 0.2,
-              color: "#999",
-              whiteSpace: "nowrap",
-            }}>
-              {w}
-            </span>
-          ))}
-        </span>
-      )}
     </span>
   );
 }
@@ -762,63 +734,52 @@ function buildHighlightSegments(text: string) {
   return segments;
 }
 
-function renderTyped(segments: { text: string; highlight: boolean; color?: string }[], upto: number) {
-  const nodes: React.ReactNode[] = [];
-  let consumed = 0;
-  for (let i = 0; i < segments.length && consumed < upto; i++) {
-    const seg = segments[i];
-    const slice = seg.text.slice(0, upto - consumed);
-    if (slice.length > 0) {
-      nodes.push(
-        seg.highlight ? (
-          <span key={i} style={{
-            fontWeight: 600,
-            color: "#111",
-            backgroundImage: `linear-gradient(${seg.color}, ${seg.color})`,
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "100% 9px",
-            backgroundPosition: "0 92%",
-          }}>
-            {slice}
-          </span>
-        ) : (
-          <span key={i}>{slice}</span>
-        )
-      );
-    }
-    consumed += seg.text.length;
-  }
-  return nodes;
-}
+// The wrapping div in the hero (see App()) fades this whole block in via
+// `animation: heroIn 0.6s ... 220ms forwards`, finishing at ~820ms. Starting
+// the underline reveal any earlier means the first phrase's whole animation
+// plays out while the text is still invisible — it "doesn't work" because
+// it's already finished by the time anyone can see it.
+const HERO_TEXT_REVEAL_START_MS = 850;
+const HIGHLIGHT_MS_PER_CHAR = 45;
+const HIGHLIGHT_GAP_MS = 200;
 
-function Typewriter({ text }: { text: string }) {
-  const [typed, setTyped] = useState("");
-  const panelRef = useRef<HTMLDivElement>(null);
+function HeroText({ text }: { text: string }) {
   const segments = useRef(buildHighlightSegments(text)).current;
+  const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
-    if (typed.length >= text.length) return;
-    const t = setTimeout(() => setTyped(text.slice(0, typed.length + 1)), 24);
+    const t = setTimeout(() => setRevealed(true), HERO_TEXT_REVEAL_START_MS);
     return () => clearTimeout(t);
-  }, [typed, text]);
+  }, []);
 
-  useEffect(() => {
-    const panel = panelRef.current;
-    if (panel) panel.scrollTo({ top: panel.scrollHeight, behavior: "smooth" });
-  }, [typed]);
-
-  const finished = typed.length >= text.length;
+  let cumulativeDelay = 0;
 
   return (
-    <div ref={panelRef} style={{
-      flex: 1,
-      minHeight: 0,
-      overflowY: "hidden",
-      marginTop: "32px",
-    }}>
+    <div style={{ marginTop: "32px" }}>
       <p style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(18px, 2.8vw, 24px)", fontWeight: 400, color: "#111", margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-        {renderTyped(segments, typed.length)}
-        {!finished && <span className="typewriter-cursor">|</span>}
+        {segments.map((seg, i) => {
+          if (!seg.highlight) return <span key={i}>{seg.text}</span>;
+          // Duration scales with phrase length — like a highlighter moving
+          // at reading speed rather than a fixed-time wipe — and each
+          // phrase's delay starts only once the previous one has finished,
+          // so the three highlights draw in sequence, not in a burst.
+          const duration = Math.min(1800, Math.max(650, seg.text.length * HIGHLIGHT_MS_PER_CHAR));
+          const delay = cumulativeDelay;
+          cumulativeDelay += duration + HIGHLIGHT_GAP_MS;
+          return (
+            <span key={i} style={{
+              fontWeight: 600,
+              color: "#111",
+              backgroundImage: `linear-gradient(${seg.color}, ${seg.color})`,
+              backgroundRepeat: "no-repeat",
+              backgroundSize: revealed ? "100% 9px" : "0% 9px",
+              backgroundPosition: "0 92%",
+              transition: `background-size ${duration}ms linear ${delay}ms`,
+            }}>
+              {seg.text}
+            </span>
+          );
+        })}
       </p>
     </div>
   );
@@ -1083,15 +1044,20 @@ function RevealSection({ children, delay = 0 }: { children: React.ReactNode; del
 
 export default function App() {
   const navVisible = useNavVisible();
+  const isMobile = useIsMobile();
   const heroRef = useRef<HTMLElement>(null);
   const heroProgress = useHeroScrollProgress(heroRef);
-  const resumeScale = 0.95 + heroProgress * 0.2;
+  const resumeScale = (0.95 + heroProgress * 0.2) * 1.2;
   return (
     <div style={{ background: "#fff", minHeight: "100vh", fontFamily: "Inter, sans-serif" }}>
       <style>{`
         @keyframes heroIn {
           from { opacity: 0; transform: translateY(24px); }
           to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes spin-gear {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
         }
         .name-word {
           cursor: pointer;
@@ -1277,7 +1243,7 @@ export default function App() {
             </div>
             {/* TODO: placeholder text, to be replaced */}
             <div style={{ opacity: 0, animation: "heroIn 0.6s var(--ease-reveal) 220ms forwards", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-              <Typewriter text="hi , I like to understand how things and people work , create workflows to make lives (or atleast my life) easier and try out things which expand my mind . I am super interested in how products are built, how they influence behaviour, and what happens behind-the-scenes most people never see. take a look around!" />
+              <HeroText text="hi , I like to understand how things and people work , create workflows to make lives (or atleast my life) easier and try out things which expand my mind . I am super interested in how products are built, how they influence behaviour, and what happens behind-the-scenes most people never see. take a look around!" />
             </div>
           </div>
 
@@ -1311,7 +1277,7 @@ export default function App() {
           arrives, then the scanner follows, same lead-in used for every
           other section so scrolling into a new part of the page always
           reads as "heading, then what it's a heading for." */}
-      <section style={{ padding: "0 24px 60px", width: "100%", minHeight: "70vh", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+      <section style={{ padding: "0 24px 60px", width: "100%", minHeight: isMobile ? "auto" : "70vh", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         {/* This wrapper is a normal-flow child of the padded section, so its
             left edge lands exactly where "Who I Am" and the other headings'
             text starts — 24/48/80px depending on breakpoint (index.css
@@ -1322,9 +1288,22 @@ export default function App() {
             would otherwise become the containing block for an absolute
             child), so the heading is positioned on a plain div, not on
             RevealSection's div, with RevealSection nested inside for the
-            reveal animation only. */}
+            reveal animation only.
+
+            top uses a fixed 35vh (viewport-relative, not a % of this box)
+            rather than 50% of the wrapper's own height — the wrapper grows
+            taller once a completed scan reveals the full résumé below, and
+            a top:50% would have re-centered against that new, taller height,
+            visibly dropping the heading down. 35vh stays put regardless of
+            how much content is stacked underneath it.
+
+            On mobile this absolute overlay isn't used at all — a fixed
+            viewport-relative top plus a much taller stacked (non-scaled)
+            scanner risked the heading landing mid-résumé instead of above
+            it, so mobile falls back to a plain static heading in normal
+            flow, like every other section label. */}
         <div style={{ position: "relative", width: "100%" }}>
-          <div style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)" }}>
+          {isMobile ? (
             <RevealSection>
               <p style={{
                 fontFamily: "'Chakra Petch', sans-serif",
@@ -1333,11 +1312,27 @@ export default function App() {
                 color: "#bbb",
                 letterSpacing: "0.14em",
                 textTransform: "uppercase",
+                marginBottom: "24px",
               }}>
                 What I've Done
               </p>
             </RevealSection>
-          </div>
+          ) : (
+            <div style={{ position: "absolute", left: 0, top: "35vh", transform: "translateY(-50%)" }}>
+              <RevealSection>
+                <p style={{
+                  fontFamily: "'Chakra Petch', sans-serif",
+                  fontSize: "22px",
+                  fontWeight: 600,
+                  color: "#bbb",
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                }}>
+                  What I've Done
+                </p>
+              </RevealSection>
+            </div>
+          )}
           <RevealSection delay={100}>
             <ResumeScanner scale={resumeScale} />
           </RevealSection>
@@ -1356,7 +1351,7 @@ export default function App() {
             <PhraseScatter stacked />
           </RevealSection>
           <RevealSection delay={140}>
-            <VideoPlaceholder />
+            <VideoEmbed />
           </RevealSection>
         </div>
         <RevealSection>
