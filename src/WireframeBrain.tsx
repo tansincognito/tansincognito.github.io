@@ -35,8 +35,13 @@ function buildBrainGeometry() {
   for (let i = 0; i < pos.count; i++) {
     v.fromBufferAttribute(pos, i);
     dir.copy(v).normalize();
-    const n1 = noise3D(dir.x * 2.2, dir.y * 2.2, dir.z * 2.2);
-    const n2 = noise3D(dir.x * 5.2 + 9, dir.y * 5.2 + 9, dir.z * 5.2 + 9);
+    // abs(dir.x) mirrors the noise sample across the x=0 fissure plane, so
+    // both hemispheres get identical fold patterns — without this, raw
+    // noise gives each side unrelated bumps, and the mesh's visual mass
+    // skews off-axis even though the fissure and stem are geometrically
+    // centered at x=0.
+    const n1 = noise3D(Math.abs(dir.x) * 2.2, dir.y * 2.2, dir.z * 2.2);
+    const n2 = noise3D(Math.abs(dir.x) * 5.2 + 9, dir.y * 5.2 + 9, dir.z * 5.2 + 9);
     const fold = n1 * 0.09 + n2 * 0.045;
     const fissure = Math.exp(-((dir.x / 0.1) ** 2)) * 0.24 * Math.max(dir.y * 0.5 + 0.5, 0);
     const flattenBase = dir.y < -0.25 ? (dir.y + 0.25) * 0.35 : 0;
@@ -56,8 +61,8 @@ function buildBrainGeometry() {
    what reads as "fused" rather than "stuck on" once both are drawn as one
    wireframe. */
 function buildStemGeometry() {
-  const topRadius = 0.3;
-  const bottomRadius = 0.13;
+  const topRadius = 0.4;
+  const bottomRadius = 0.2;
   const height = 0.8;
   const geo = new THREE.CylinderGeometry(topRadius, bottomRadius, height, 12, 3);
   geo.translate(0, -0.5 - height / 2, 0);

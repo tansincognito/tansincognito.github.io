@@ -382,7 +382,7 @@ function VideoPlaceholder() {
       ref={ref}
       style={{
         position: "relative",
-        width: "100%",
+        width: "50%",
         aspectRatio: "4 / 5",
         background: "#f9f9f9",
         opacity: visible ? 1 : 0,
@@ -636,15 +636,26 @@ function CodeHighlight({ text, color }: { text: string; color: string }) {
     <span
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{
-        ...HIGHLIGHT_BASE,
-        backgroundImage: `linear-gradient(${color}, ${color})`,
-        fontFamily: hovered ? "'DM Mono', monospace" : "inherit",
-        fontSize: hovered ? "0.62em" : "inherit",
-        letterSpacing: hovered ? "0.02em" : "normal",
-      }}
+      style={{ ...HIGHLIGHT_BASE, backgroundImage: `linear-gradient(${color}, ${color})` }}
     >
-      {hovered ? binaryEncode(text) : text}
+      {text}
+      {hovered && (
+        <span style={{
+          position: "absolute",
+          top: "100%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          whiteSpace: "nowrap",
+          fontFamily: "'DM Mono', monospace",
+          fontSize: "10px",
+          letterSpacing: "0.03em",
+          color: "#999",
+          paddingTop: "6px",
+          pointerEvents: "none",
+        }}>
+          {binaryEncode(text)}
+        </span>
+      )}
     </span>
   );
 }
@@ -1074,7 +1085,7 @@ export default function App() {
   const navVisible = useNavVisible();
   const heroRef = useRef<HTMLElement>(null);
   const heroProgress = useHeroScrollProgress(heroRef);
-  const resumeScale = (0.82 + heroProgress * 0.18) * 1.4;
+  const resumeScale = 0.95 + heroProgress * 0.2;
   return (
     <div style={{ background: "#fff", minHeight: "100vh", fontFamily: "Inter, sans-serif" }}>
       <style>{`
@@ -1300,28 +1311,37 @@ export default function App() {
           arrives, then the scanner follows, same lead-in used for every
           other section so scrolling into a new part of the page always
           reads as "heading, then what it's a heading for." */}
-      <section style={{ position: "relative", padding: "0 24px 180px", width: "100%", minHeight: "70vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-        {/* Positioned on this plain wrapper, not RevealSection's own div —
-            RevealSection's transform would otherwise make its wrapper the
-            containing block for an absolutely positioned child, resolving
-            left/top against that tiny inline box instead of the section. */}
-        <div style={{ position: "absolute", left: "24px", top: "50%", transform: "translateY(-50%)" }}>
-          <RevealSection>
-            <p style={{
-              fontFamily: "'Chakra Petch', sans-serif",
-              fontSize: "22px",
-              fontWeight: 600,
-              color: "#bbb",
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-            }}>
-              What I've Done
-            </p>
+      <section style={{ padding: "0 24px 60px", width: "100%", minHeight: "70vh", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        {/* This wrapper is a normal-flow child of the padded section, so its
+            left edge lands exactly where "Who I Am" and the other headings'
+            text starts — 24/48/80px depending on breakpoint (index.css
+            overrides section padding responsively). Anchoring the absolute
+            heading to `left: 0` on THIS box, instead of a hardcoded px value
+            on the section itself, is what keeps it aligned across
+            breakpoints. RevealSection's own wrapper has a `transform` (which
+            would otherwise become the containing block for an absolute
+            child), so the heading is positioned on a plain div, not on
+            RevealSection's div, with RevealSection nested inside for the
+            reveal animation only. */}
+        <div style={{ position: "relative", width: "100%" }}>
+          <div style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)" }}>
+            <RevealSection>
+              <p style={{
+                fontFamily: "'Chakra Petch', sans-serif",
+                fontSize: "22px",
+                fontWeight: 600,
+                color: "#bbb",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+              }}>
+                What I've Done
+              </p>
+            </RevealSection>
+          </div>
+          <RevealSection delay={100}>
+            <ResumeScanner scale={resumeScale} />
           </RevealSection>
         </div>
-        <RevealSection delay={100}>
-          <ResumeScanner scale={resumeScale} />
-        </RevealSection>
       </section>
 
       {/* ── About ── */}
