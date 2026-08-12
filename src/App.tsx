@@ -81,8 +81,8 @@ const projects: Project[] = [
 
 const socials = [
   { icon: Linkedin, label: "LinkedIn", href: "https://www.linkedin.com/in/tansinha/" },
-  { icon: Twitter,  label: "Twitter",  href: "#" },
-  { icon: Github,   label: "GitHub",   href: "https://github.com/tan-sinha" },
+  { icon: Twitter,  label: "Twitter",  href: "https://x.com/tansincognito?s=11" },
+  { icon: Github,   label: "GitHub",   href: "https://github.com/tansincognito" },
   { icon: Mail,     label: "Email",    href: "mailto:sinhatan2002@gmail.com" },
 ];
 
@@ -97,8 +97,8 @@ const panelContent: Record<
   tanishaa: {
     title: "Hi, I'm Tanishaa.",
     sections: [
-      { heading: "Who I am",        body: "Someone who thinks too much about why people click on things. Consumer by nature, curious by choice." },
-      { heading: "why i'm here",    body: "To explore and showcase ideas which I wanted to bring to life in some capacity." },
+      { heading: "what drives me",        body: "the idea there is no one right way to live your life" },
+      { heading: "why i'm here",    body: "to showcase ideas which I wanted to bring to life in some capacity." },
       { heading: "when i'm offline", body: "Reading, playing TT, travelling, and honestly just talking to people from different walks of life." },
       { heading: "into",             body: "Consumer psychology · Workflow Automation· Travel · Music " },
     ],
@@ -108,8 +108,8 @@ const panelContent: Record<
     sections: [
       { heading: "Studying",  body: "Focused on developing in three domains: people , tech and business." }, // TODO: add degree / school
       { heading: "Building",  body: "Side projects tinkering with my high IQ assistant" },
-      { heading: "Areas",     body: "Product thinking · Consumer tech · Writing in public" },
-      { heading: "Open To",   body: "Opportunities and good comversations." },
+      { heading: "Areas",     body: "Product engg · Consumer tech · Applied Technology · Writing" },
+      { heading: "Open To",   body: "Mutual fit opportunities and sparky comversations " },
     ],
   },
 };
@@ -636,7 +636,7 @@ const HIGHLIGHT_PHRASES = [
 ];
 
 // TODO: placeholder text, to be replaced
-const HERO_PARAGRAPH_TEXT = "hi , I like to understand how things and people work , create workflows to make lives (or atleast my life) easier and try out things which expand my mind . I am super interested in how products are built, how they influence behaviour, and what happens behind-the-scenes most people never see. take a look around!";
+const HERO_PARAGRAPH_TEXT = "hi , I like to understand how things and people work , create workflows to make lives (or atleast my life) easier and do things which expand my mind . I am super interested in how products are built, how they influence behaviour, and what happens behind-the-scenes most people never see. take a look around!";
 
 /* ─── closing-line highlight words ─────────────────────── */
 /* Same pastel bleed-through underline as the hero typewriter's highlighted
@@ -877,8 +877,9 @@ function HeroText({ text }: { text: string }) {
    second line only begins after the first finishes typing. */
 
 const TYPEWRITER_LINES = [
-  "> building things faster than I can explain them.", // TODO: replace placeholder line
+  "> building with intent , shipping with precision", // TODO: replace placeholder line
   "> still convinced curiosity beats certainty.", // TODO: replace placeholder line
+
 ];
 
 function TypewriterLines({ lines, startDelay = 0 }: { lines: string[]; startDelay?: number }) {
@@ -939,11 +940,16 @@ const resumeData = {
   name: "Tanishaa Sinha",
   title: "Software Engineer", // TODO: confirm tagline
   experience: [
-    { role: "Software Engineer II", org: "Dell Technologies", period: "Aug'24 — Current", blurb: "Created enterprise grade microservices , automation scripts , and lots of errors." }, // TODO: replace with real role
-    { role: "Winter/Summer Intern", org: "Dell Technologies", period: "May '23 — May '24", blurb: "Did data analysis and automated testing to ensure smooth workflows" }, // TODO: replace with real role
-    { role: "Writing & Editorial Freelancer", org: "Markovate", period: "TODO — Dates", blurb: "Explored writing technical articles " }, // TODO: replace with real role
+    { role: "Software Engineer II", org: "Dell Technologies", period: "Aug'24 — Current", blurb: "Built and deployed enterprise grade microservices , automation scripts , and lots of errors." }, // TODO: replace with real role
+    { role: "Winter/Summer Intern", org: "Dell Technologies", period: "May '23 — May '24", blurb: "Analysed data for 300k+ orders , automated testing and had a lot of coffee chats/TT sessions" }, // TODO: replace with real role
+    { role: "Writing & Editorial Freelancer", org: "Markovate", period: "May '22— July '22", blurb: "Explored writing technical articles " }, // TODO: replace with real role
   ],
-  skills: ["Python", "REST APIs", "SQL", "React.JS", "Automation Workflows", "Distributed Systems", "CI/CD", "Data Visualisation", "LLM/RAG Applications"], // TODO: replace
+  skills: [
+    { label: "Build", items: ["Python", "React", "REST APIs", "SQL", "Distributed Systems", "System Design"] },
+    { label: "Ship", items: ["Docker", "Kubernetes", "CI/CD", "Cloud", "Automation", "Observability"] },
+    { label: "Understand", items: ["Data Visualisation", "Database Design", "Product Thinking", "Analytics"] },
+    { label: "Explore", items: ["LLM Applications", "RAG", "Agents", "MCP"] },
+  ],
   education: { degree: "Computer Science And Engineering", school: "Manipal University Jaipur", period: "2020 — 2024" }, // TODO: replace
 };
 
@@ -1123,7 +1129,7 @@ function ResumeScanner({ scale = 1 }: { scale?: number }) {
                         </span>
                         <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "12px", color: "#bbb" }}>{e.period}</span>
                       </div>
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "12px", color: "#bbb", marginTop: "2px", marginBottom: "6px" }}>{e.org}</p>
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "12px", color: "#555", marginTop: "2px", marginBottom: "6px" }}>{e.org}</p>
                       <p style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", color: "#111", lineHeight: 1.55 }}>{e.blurb}</p>
                     </div>
                   </Reveal>
@@ -1135,30 +1141,41 @@ function ResumeScanner({ scale = 1 }: { scale?: number }) {
 
             <div>
               <Reveal delay={700}><p style={RESUME_LABEL_STYLE}>Skills</p></Reveal>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                {resumeData.skills.map((s, i) => (
-                  <Reveal key={s} delay={760 + i * 70} scale>
-                    <span style={{
-                      fontFamily: "'DM Mono', monospace",
-                      fontSize: "11px",
-                      color: "#111",
-                      background: "#fff",
-                      border: "1px solid #ddd",
-                      padding: "5px 12px",
-                      borderRadius: "4px",
-                    }}>
-                      {s.toUpperCase()}
-                    </span>
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                {resumeData.skills.map((group, gi) => (
+                  <Reveal key={group.label} delay={760 + gi * 90}>
+                    <div>
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "11px", fontWeight: 700, color: "#111", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>
+                        {group.label}
+                      </p>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                        {group.items.map((s, i) => (
+                          <Reveal key={s} delay={800 + gi * 90 + i * 50} scale>
+                            <span style={{
+                              fontFamily: "'DM Mono', monospace",
+                              fontSize: "11px",
+                              color: "#111",
+                              background: "#fff",
+                              border: "1px solid #ddd",
+                              padding: "5px 12px",
+                              borderRadius: "4px",
+                            }}>
+                              {s.toUpperCase()}
+                            </span>
+                          </Reveal>
+                        ))}
+                      </div>
+                    </div>
                   </Reveal>
                 ))}
               </div>
             </div>
 
-            <Reveal delay={1150}><div style={{ height: "1px", background: "#eee" }} /></Reveal>
+            <Reveal delay={1350}><div style={{ height: "1px", background: "#eee" }} /></Reveal>
 
             <div>
-              <Reveal delay={1200}><p style={RESUME_LABEL_STYLE}>Education</p></Reveal>
-              <Reveal delay={1250}>
+              <Reveal delay={1400}><p style={RESUME_LABEL_STYLE}>Education</p></Reveal>
+              <Reveal delay={1450}>
                 <div>
                   <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "15px", fontWeight: 700, color: "#111" }}>{resumeData.education.degree}</p>
                   <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "12px", color: "#888", marginTop: "3px" }}>{resumeData.education.school}, {resumeData.education.period}</p>
@@ -1183,11 +1200,96 @@ function RevealSection({ children, delay = 0 }: { children: React.ReactNode; del
   );
 }
 
+/* ─── Agent mode ────────────────────────────────────────── */
+/* AI crawlers/agents (GPTBot, ClaudeBot, PerplexityBot, etc.) get a plain,
+   semantic-HTML summary instead of the full animated/WebGL/video
+   experience — same underlying data (projects, résumé, about content),
+   rendered as headings and lists a model can parse without waiting on
+   lazy-loaded three.js or hover-driven reveals. Auto-detected from the
+   user agent string; also toggleable by hand from the nav for any visitor
+   who just wants the fast, plain version. */
+
+const AI_AGENT_UA_PATTERNS = [
+  /GPTBot/i, /ChatGPT-User/i, /OAI-SearchBot/i, /CCBot/i, /anthropic-ai/i,
+  /ClaudeBot/i, /Claude-Web/i, /PerplexityBot/i, /Google-Extended/i,
+  /Bytespider/i, /Applebot-Extended/i, /Diffbot/i, /cohere-ai/i,
+  /YouBot/i, /Amazonbot/i, /Bingbot/i,
+];
+
+function detectAgentUA() {
+  if (typeof navigator === "undefined") return false;
+  return AI_AGENT_UA_PATTERNS.some((re) => re.test(navigator.userAgent));
+}
+
+const AGENT_SECTION_STYLE: React.CSSProperties = { fontSize: "18px", fontWeight: 700, marginTop: "32px", marginBottom: "12px" };
+const AGENT_LIST_STYLE: React.CSSProperties = { paddingLeft: "20px", marginBottom: "8px" };
+
+function AgentModePage() {
+  return (
+    <main style={{ maxWidth: "760px", margin: "0 auto", padding: "96px 24px 80px", fontFamily: "Inter, sans-serif", color: "#111", lineHeight: 1.6 }}>
+      <h1 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "30px", marginBottom: "4px" }}>{resumeData.name}</h1>
+      <p style={{ color: "#555", marginBottom: "24px" }}>{resumeData.title} — A consumer trying to understand consumers, while exploring the black box known as technology.</p>
+
+      <p>{HERO_PARAGRAPH_TEXT}</p>
+
+      <h2 style={AGENT_SECTION_STYLE}>Projects</h2>
+      <ul style={AGENT_LIST_STYLE}>
+        {projects.filter((p) => p.active).map((p) => (
+          <li key={p.id} style={{ marginBottom: "12px" }}>
+            <strong>{p.name}</strong> — {p.tagline}. {p.description} Stack: {p.stack.join(", ")}.{" "}
+            <a href={p.github}>GitHub</a>{p.live !== "#" && <> · <a href={p.live}>Live</a></>}
+          </li>
+        ))}
+      </ul>
+
+      <h2 style={AGENT_SECTION_STYLE}>Experience</h2>
+      <ul style={AGENT_LIST_STYLE}>
+        {resumeData.experience.map((e) => (
+          <li key={e.role} style={{ marginBottom: "12px" }}>
+            <strong>{e.role}</strong>, {e.org} ({e.period}) — {e.blurb}
+          </li>
+        ))}
+      </ul>
+
+      <h2 style={AGENT_SECTION_STYLE}>Skills</h2>
+      <ul style={AGENT_LIST_STYLE}>
+        {resumeData.skills.map((group) => (
+          <li key={group.label} style={{ marginBottom: "6px" }}>
+            <strong>{group.label}:</strong> {group.items.join(", ")}
+          </li>
+        ))}
+      </ul>
+
+      <h2 style={AGENT_SECTION_STYLE}>Education</h2>
+      <p>{resumeData.education.degree}, {resumeData.education.school} ({resumeData.education.period})</p>
+
+      <h2 style={AGENT_SECTION_STYLE}>About</h2>
+      {(["tanishaa", "sinha"] as const).map((key) => (
+        <div key={key} style={{ marginBottom: "12px" }}>
+          {panelContent[key].sections.map((s) => (
+            <p key={s.heading} style={{ marginBottom: "8px" }}>
+              <strong>{s.heading}:</strong> {s.body}
+            </p>
+          ))}
+        </div>
+      ))}
+
+      <h2 style={AGENT_SECTION_STYLE}>Contact</h2>
+      <ul style={AGENT_LIST_STYLE}>
+        {socials.map(({ label, href }) => (
+          <li key={label}><a href={href}>{label}</a></li>
+        ))}
+      </ul>
+    </main>
+  );
+}
+
 /* ─── App ───────────────────────────────────────────────── */
 
 export default function App() {
   const navVisible = useNavVisible();
   const isMobile = useIsMobile();
+  const [agentMode, setAgentMode] = useState(detectAgentUA);
   const heroRef = useRef<HTMLElement>(null);
   const heroProgress = useHeroScrollProgress(heroRef);
   const resumeScale = 0.85 + heroProgress * 0.15;
@@ -1332,7 +1434,7 @@ export default function App() {
       {/* ── Nav ── */}
       <nav style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-        display: "flex", alignItems: "center", justifyContent: "flex-end",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "16px 24px",
         background: "rgba(255,255,255,0.88)",
         backdropFilter: "blur(16px)",
@@ -1341,24 +1443,44 @@ export default function App() {
         transform: navVisible ? "translateY(0)" : "translateY(-100%)",
         transition: "transform var(--dur-base) var(--ease-response)",
       }}>
-        <span style={{
-          fontFamily: "'DM Mono', monospace",
-          fontSize: "14px",
-          color: "#111",
-          letterSpacing: "0.04em",
-          marginRight: "14px",
-        }}>
-          Find me at -&gt;
-        </span>
-        <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
-          {socials.map(({ icon: Icon, label, href }) => (
-            <a key={label} href={href} title={label} className="nav-icon" target="_blank" rel="noopener noreferrer">
-              <Icon size={26} strokeWidth={1.8} />
-            </a>
-          ))}
+        <button
+          onClick={() => setAgentMode((v) => !v)}
+          title="Plain, semantic-HTML view built for AI agents/crawlers"
+          style={{
+            fontFamily: "'DM Mono', monospace",
+            fontSize: "14px",
+            color: "#111",
+            letterSpacing: "0.04em",
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+          }}
+        >
+          {agentMode ? "Exit" : "For Agents"}
+        </button>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <span style={{
+            fontFamily: "'DM Mono', monospace",
+            fontSize: "14px",
+            color: "#111",
+            letterSpacing: "0.04em",
+            marginRight: "14px",
+          }}>
+            Find me on -&gt;
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
+            {socials.map(({ icon: Icon, label, href }) => (
+              <a key={label} href={href} title={label} className="nav-icon" target="_blank" rel="noopener noreferrer">
+                <Icon size={26} strokeWidth={1.8} />
+              </a>
+            ))}
+          </div>
         </div>
       </nav>
 
+      {agentMode ? <AgentModePage /> : (
+      <>
       {/* ── Hero + Projects ── */}
       <section ref={heroRef} style={{ paddingTop: "120px", paddingBottom: "80px", paddingLeft: "24px", paddingRight: "24px", width: "100%" }}>
         <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
@@ -1530,7 +1652,13 @@ export default function App() {
             minHeight: "85vh",
           }}
         >
+          {/* On mobile the flex column otherwise renders in DOM order
+              (phrases, video, heading) — every other section on the page
+              leads with its heading, so the heading gets moved first here
+              via `order` rather than reshuffling the JSX (which would also
+              reorder the desktop grid's left-to-right column layout). */}
           <div style={{
+            order: isMobile ? 2 : undefined,
             transform: `translateY(${-whoIAmProgress * 80}px)`,
             opacity: 1 - whoIAmProgress,
             transition: "transform 0.05s linear, opacity 0.05s linear",
@@ -1544,25 +1672,27 @@ export default function App() {
           {/* Video's own width:100% fills whatever this wrapper gives it —
               a definite px width here (not a percentage) so the "auto"
               grid track sizes to it correctly on desktop. */}
-          <div style={{ width: isMobile ? "100%" : "340px" }}>
+          <div style={{ order: isMobile ? 3 : undefined, width: isMobile ? "100%" : "340px" }}>
             <RevealSection delay={140}>
               <VideoEmbed />
             </RevealSection>
           </div>
 
-          <RevealSection>
-            <p style={{
-              fontFamily: "'Chakra Petch', sans-serif",
-              fontSize: "26px",
-              fontWeight: 600,
-              color: "#bbb",
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              textAlign: isMobile ? "left" : "center",
-            }}>
-              Who I Am
-            </p>
-          </RevealSection>
+          <div style={{ order: isMobile ? 1 : undefined }}>
+            <RevealSection>
+              <p style={{
+                fontFamily: "'Chakra Petch', sans-serif",
+                fontSize: "26px",
+                fontWeight: 600,
+                color: "#bbb",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                textAlign: isMobile ? "left" : "center",
+              }}>
+                Who Am I
+              </p>
+            </RevealSection>
+          </div>
         </div>
         <RevealSection>
           <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: "56px", marginBottom: "20px" }}>
@@ -1589,7 +1719,7 @@ export default function App() {
             lineHeight: 1.55,
             letterSpacing: "0.015em",
           }}>
-            In short, the goal is to max out in <CodeHighlight text="code" color="#FFDCC2" />,{" "}
+            In short, the goal is to max out using <CodeHighlight text="code" color="#FFDCC2" />,{" "}
             <CognitionHighlight text="cognition" color="#C7F0DC" />, and{" "}
             <CuriosityHighlight text="curiosity" color="#E1D7F5" />.
           </p>
@@ -1611,6 +1741,8 @@ export default function App() {
           </div>
         </footer>
       </RevealSection>
+      </>
+      )}
 
     </div>
   );
