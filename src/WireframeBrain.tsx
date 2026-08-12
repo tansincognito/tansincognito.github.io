@@ -253,8 +253,14 @@ function useConnectors(open: boolean, shown: boolean, leftNodes: typeof THOUGHT_
       const gridRect = grid.getBoundingClientRect();
       setSvgSize({ w: gridRect.width, h: gridRect.height });
       const brainRect = brain.getBoundingClientRect();
-      const brainLeftX = brainRect.left - gridRect.left;
-      const brainRightX = brainRect.right - gridRect.left;
+      // The camera frames the mesh with headroom so it doesn't clip while
+      // rotating, so the rendered brain's silhouette only reaches ~80% of
+      // the container box's half-width — anchoring connectors at the raw
+      // box edge left a visible gap before the actual wireframe line-art.
+      const brainCenterX = (brainRect.left + brainRect.right) / 2 - gridRect.left;
+      const brainHalfWidth = (brainRect.width / 2) * 0.8;
+      const brainLeftX = brainCenterX - brainHalfWidth;
+      const brainRightX = brainCenterX + brainHalfWidth;
       const brainY = brainRect.top + brainRect.height / 2 - gridRect.top;
 
       const next: ConnectorPath[] = [];

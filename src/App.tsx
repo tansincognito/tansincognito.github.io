@@ -80,9 +80,9 @@ const projects: Project[] = [
 ];
 
 const socials = [
-  { icon: Github,   label: "GitHub",   href: "https://github.com/tan-sinha" },
-  { icon: Twitter,  label: "Twitter",  href: "#" },
   { icon: Linkedin, label: "LinkedIn", href: "https://www.linkedin.com/in/tansinha/" },
+  { icon: Twitter,  label: "Twitter",  href: "#" },
+  { icon: Github,   label: "GitHub",   href: "https://github.com/tan-sinha" },
   { icon: Mail,     label: "Email",    href: "mailto:sinhatan2002@gmail.com" },
 ];
 
@@ -185,6 +185,30 @@ function useHeroScrollProgress(heroRef: React.RefObject<HTMLElement>) {
     };
   }, [heroRef]);
   return progress;
+}
+
+/* Measures targetRef's top edge relative to outerRef's, in px — used to
+   pin the "What I've Done" heading to the résumé scanner's actual top
+   instead of a guessed viewport-relative offset, so it stays aligned as
+   the scanner's height changes (e.g. once a scan completes). */
+function useTopOffset(outerRef: React.RefObject<HTMLElement>, targetRef: React.RefObject<HTMLElement>, deps: unknown[]) {
+  const [top, setTop] = useState(0);
+  useEffect(() => {
+    const outer = outerRef.current;
+    const target = targetRef.current;
+    if (!outer || !target) return;
+    const measure = () => setTop(target.getBoundingClientRect().top - outer.getBoundingClientRect().top);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(target);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+  return top;
 }
 
 function useIsMobile() {
@@ -371,20 +395,29 @@ function PhraseScatter({ stacked = false }: { stacked?: boolean }) {
 
 /* ─── VideoEmbed ────────────────────────────────────────── */
 /* Same corner-tick frame language as the résumé scanner's ghost document,
-   now wrapping a real <video> — served from /public/videos so Vite copies
-   it as-is rather than bundling/hashing a 1MB asset through the JS graph. */
+   wrapping a real looping, muted <video>. Full width and centered on
+   mobile since there's no second grid column to share space with there.
+   Served from /public/videos so Vite copies it as-is rather than
+   bundling/hashing a multi-MB asset through the JS graph. */
+
+const VIDEO_SRC = "/videos/myvideo.mp4";
 
 function VideoEmbed() {
   const { ref, visible } = useReveal();
+  const isMobile = useIsMobile();
+
   return (
     <div
       ref={ref}
       style={{
         position: "relative",
-        width: "50%",
+        width: isMobile ? "100%" : "65%",
+        margin: isMobile ? "0 auto" : undefined,
         aspectRatio: "4 / 5",
         background: "#f9f9f9",
-        opacity: visible ? 1 : 0,
+        borderRadius: "16px",
+        overflow: "hidden",
+        opacity: visible ? 0.9 : 0,
         transform: visible ? "translateY(0)" : "translateY(28px)",
         transition: "opacity var(--dur-section) var(--ease-reveal), transform var(--dur-section) var(--ease-reveal)",
       }}
@@ -393,8 +426,10 @@ function VideoEmbed() {
         <div key={i} style={{ position: "absolute", width: "14px", height: "14px", zIndex: 1, ...c }} />
       ))}
       <video
-        src="/videos/myvideo.mp4"
-        controls
+        src={VIDEO_SRC}
+        muted
+        loop
+        autoPlay
         playsInline
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
       />
@@ -599,9 +634,11 @@ const HIGHLIGHT_PHRASES = [
 /* Same pastel bleed-through underline as the hero typewriter's highlighted
    phrases, as the shared base — wider letter-spacing than body text and a
    slight scale-up on hover apply to all three. Each word then layers its
-   own hover behavior on top: code prints "def code()" below itself,
-   cognition grows a small spinning gear over its first "i", curiosity
-   gets a red question mark in front of it. */
+   own hover behavior on top: code swaps its "d" for angle brackets
+   (co<>e), cognition swaps its "o" for a small spinning gear, curiosity
+   gains a trailing "?" — all three accent marks share one dark-grey color. */
+
+const ACCENT_COLOR = "#555";
 
 const HIGHLIGHT_BASE: React.CSSProperties = {
   fontWeight: 600,
@@ -618,15 +655,7 @@ const HIGHLIGHT_BASE: React.CSSProperties = {
 
 function CodeHighlight({ text, color }: { text: string; color: string }) {
   const [hovered, setHovered] = useState(false);
-  const flankStyle: React.CSSProperties = {
-    display: "inline-block",
-    overflow: "hidden",
-    verticalAlign: "baseline",
-    fontFamily: "'DM Mono', monospace",
-    fontWeight: 400,
-    color: "#999",
-    transition: "max-width 0.25s ease, opacity 0.2s ease",
-  };
+  const dIndex = text.indexOf("d"); // the "d" in "code" — swaps for angle brackets, co<>e
   return (
     <span
       onMouseEnter={() => setHovered(true)}
@@ -637,13 +666,33 @@ function CodeHighlight({ text, color }: { text: string; color: string }) {
         transform: hovered ? "scale(1.08)" : "scale(1)",
       }}
     >
-      <span style={{ ...flankStyle, maxWidth: hovered ? "2.6em" : "0px", opacity: hovered ? 1 : 0 }}>
-        def{" "}
-      </span>
-      {text}
-      <span style={{ ...flankStyle, maxWidth: hovered ? "1.2em" : "0px", opacity: hovered ? 1 : 0 }}>
-        ()
-      </span>
+      {text.split("").map((ch, i) => {
+        if (i !== dIndex) return <span key={i}>{ch}</span>;
+        // Fixed-width box, both states just toggle opacity in place — a
+        // width-driven reveal grows the hovered box itself while it's
+        // under the cursor, which can nudge the pointer outside it
+        // mid-transition and fire a mouseleave/mouseenter loop ("glitching"
+        // on hover). Keeping the box size constant avoids that entirely.
+        return (
+          <span key={i} style={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center", width: "0.85em", verticalAlign: "baseline" }}>
+            <span style={{ opacity: hovered ? 0 : 1, transition: "opacity 0.15s ease" }}>{ch}</span>
+            <span style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontFamily: "'DM Mono', monospace",
+              fontWeight: 700,
+              color: ACCENT_COLOR,
+              opacity: hovered ? 1 : 0,
+              transition: "opacity 0.15s ease",
+            }}>
+              {"<>"}
+            </span>
+          </span>
+        );
+      })}
     </span>
   );
 }
@@ -664,15 +713,24 @@ function CognitionHighlight({ text, color }: { text: string; color: string }) {
       {text.split("").map((ch, i) => {
         if (i !== oIndex) return <span key={i}>{ch}</span>;
         return (
-          <span key={i} style={{ position: "relative", display: "inline-block", width: "0.72em", height: "0.72em", verticalAlign: "-0.08em" }}>
-            <span style={{ position: "absolute", inset: 0, opacity: hovered ? 0 : 1, transition: "opacity 0.15s ease" }}>{ch}</span>
+          <span key={i} style={{
+            position: "relative",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "0.78em",
+            height: "0.78em",
+            verticalAlign: "-0.12em",
+          }}>
+            <span style={{ opacity: hovered ? 0 : 1, transition: "opacity 0.15s ease" }}>{ch}</span>
             <Cog
-              size={11}
-              color={TERRACOTTA}
               strokeWidth={2}
               style={{
                 position: "absolute",
                 inset: 0,
+                width: "100%",
+                height: "100%",
+                color: ACCENT_COLOR,
                 opacity: hovered ? 1 : 0,
                 transition: "opacity 0.15s ease",
                 animation: hovered ? "spin-gear 1.1s linear infinite" : "none",
@@ -697,20 +755,20 @@ function CuriosityHighlight({ text, color }: { text: string; color: string }) {
         transform: hovered ? "scale(1.08)" : "scale(1)",
       }}
     >
+      {text}
       <span style={{
         display: "inline-block",
-        color: "#D64545",
+        color: ACCENT_COLOR,
         fontWeight: 700,
         maxWidth: hovered ? "0.7em" : "0px",
-        marginRight: hovered ? "3px" : "0px",
+        marginLeft: hovered ? "3px" : "0px",
         opacity: hovered ? 1 : 0,
         overflow: "hidden",
         verticalAlign: "-0.15em",
-        transition: "max-width 0.25s ease, opacity 0.2s ease, margin-right 0.25s ease",
+        transition: "max-width 0.25s ease, opacity 0.2s ease, margin-left 0.25s ease",
       }}>
         ?
       </span>
-      {text}
     </span>
   );
 }
@@ -781,6 +839,60 @@ function HeroText({ text }: { text: string }) {
           );
         })}
       </p>
+    </div>
+  );
+}
+
+/* ─── TypewriterLines ───────────────────────────────────── */
+/* Two lines typed out one at a time, terminal-style, reusing the same
+   blinking-cursor class as the résumé scanner's "Scanning_" state. Starts
+   once scrolled into view; the second line only begins after the first
+   finishes typing. */
+
+const TYPEWRITER_LINES = [
+  "> building things faster than I can explain them.", // TODO: replace placeholder line
+  "> still convinced curiosity beats certainty.", // TODO: replace placeholder line
+];
+
+function TypewriterLines({ lines }: { lines: string[] }) {
+  const { ref, visible } = useReveal();
+  const [displayed, setDisplayed] = useState<string[]>(() => lines.map(() => ""));
+  const [lineIndex, setLineIndex] = useState(0);
+
+  useEffect(() => {
+    if (!visible || lineIndex >= lines.length) return;
+    const full = lines[lineIndex];
+    let i = 0;
+    const interval = setInterval(() => {
+      i += 1;
+      setDisplayed((prev) => {
+        const next = [...prev];
+        next[lineIndex] = full.slice(0, i);
+        return next;
+      });
+      if (i >= full.length) {
+        clearInterval(interval);
+        setTimeout(() => setLineIndex((v) => v + 1), 300);
+      }
+    }, 32);
+    return () => clearInterval(interval);
+  }, [visible, lineIndex, lines]);
+
+  return (
+    <div ref={ref} style={{ marginTop: "20px" }}>
+      {lines.map((_, i) => (
+        <p key={i} style={{
+          margin: 0,
+          minHeight: "1.7em",
+          fontFamily: "'DM Mono', monospace",
+          fontSize: "clamp(13px, 1.6vw, 15px)",
+          color: "#888",
+          lineHeight: 1.7,
+        }}>
+          {displayed[i]}
+          {i === lineIndex && lineIndex < lines.length && <span className="typewriter-cursor">_</span>}
+        </p>
+      ))}
     </div>
   );
 }
@@ -1047,7 +1159,10 @@ export default function App() {
   const isMobile = useIsMobile();
   const heroRef = useRef<HTMLElement>(null);
   const heroProgress = useHeroScrollProgress(heroRef);
-  const resumeScale = (0.95 + heroProgress * 0.2) * 1.2;
+  const resumeScale = 0.85 + heroProgress * 0.15;
+  const resumeOuterRef = useRef<HTMLDivElement>(null);
+  const resumeScannerWrapRef = useRef<HTMLDivElement>(null);
+  const resumeHeadingTop = useTopOffset(resumeOuterRef, resumeScannerWrapRef, [isMobile, resumeScale]);
   return (
     <div style={{ background: "#fff", minHeight: "100vh", fontFamily: "Inter, sans-serif" }}>
       <style>{`
@@ -1189,6 +1304,15 @@ export default function App() {
         transform: navVisible ? "translateY(0)" : "translateY(-100%)",
         transition: "transform var(--dur-base) var(--ease-response)",
       }}>
+        <span style={{
+          fontFamily: "'DM Mono', monospace",
+          fontSize: "14px",
+          color: "#111",
+          letterSpacing: "0.04em",
+          marginRight: "14px",
+        }}>
+          Find me at -&gt;
+        </span>
         <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
           {socials.map(({ icon: Icon, label, href }) => (
             <a key={label} href={href} title={label} className="nav-icon">
@@ -1244,12 +1368,19 @@ export default function App() {
             {/* TODO: placeholder text, to be replaced */}
             <div style={{ opacity: 0, animation: "heroIn 0.6s var(--ease-reveal) 220ms forwards", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
               <HeroText text="hi , I like to understand how things and people work , create workflows to make lives (or atleast my life) easier and try out things which expand my mind . I am super interested in how products are built, how they influence behaviour, and what happens behind-the-scenes most people never see. take a look around!" />
+              <TypewriterLines lines={TYPEWRITER_LINES} />
             </div>
           </div>
 
-          {/* RIGHT — projects, 2 × 3 */}
+          {/* RIGHT — projects, 2 × 3. On mobile, hero-grid collapses to a
+              single stacked column, so tying this to heroProgress made it
+              slide/fade away while scrolling through the hero itself,
+              before "What I've Built" had even been read. Desktop keeps
+              the door-split parallax; mobile just lets each project card's
+              own on-scroll reveal (see ProjectCard's useReveal) handle it
+              once the section comes into view. */}
           <div
-            style={{
+            style={isMobile ? { marginTop: "24px" } : {
               marginTop: "24px",
               transform: `translateX(${heroProgress * 140}px)`,
               opacity: 1 - heroProgress,
@@ -1290,11 +1421,9 @@ export default function App() {
             RevealSection's div, with RevealSection nested inside for the
             reveal animation only.
 
-            top uses a fixed 35vh (viewport-relative, not a % of this box)
-            rather than 50% of the wrapper's own height — the wrapper grows
-            taller once a completed scan reveals the full résumé below, and
-            a top:50% would have re-centered against that new, taller height,
-            visibly dropping the heading down. 35vh stays put regardless of
+            top is measured from the scanner's actual top edge (useTopOffset)
+            rather than a guessed viewport-relative value, so the heading
+            lines up with the top of the résumé object itself regardless of
             how much content is stacked underneath it.
 
             On mobile this absolute overlay isn't used at all — a fixed
@@ -1302,7 +1431,7 @@ export default function App() {
             scanner risked the heading landing mid-résumé instead of above
             it, so mobile falls back to a plain static heading in normal
             flow, like every other section label. */}
-        <div style={{ position: "relative", width: "100%" }}>
+        <div ref={resumeOuterRef} style={{ position: "relative", width: "100%" }}>
           {isMobile ? (
             <RevealSection>
               <p style={{
@@ -1318,7 +1447,7 @@ export default function App() {
               </p>
             </RevealSection>
           ) : (
-            <div style={{ position: "absolute", left: 0, top: "35vh", transform: "translateY(-50%)" }}>
+            <div style={{ position: "absolute", left: 0, top: `${resumeHeadingTop}px` }}>
               <RevealSection>
                 <p style={{
                   fontFamily: "'Chakra Petch', sans-serif",
@@ -1333,26 +1462,30 @@ export default function App() {
               </RevealSection>
             </div>
           )}
-          <RevealSection delay={100}>
-            <ResumeScanner scale={resumeScale} />
-          </RevealSection>
+          <div ref={resumeScannerWrapRef}>
+            <RevealSection delay={100}>
+              <ResumeScanner scale={resumeScale} />
+            </RevealSection>
+          </div>
         </div>
       </section>
 
       {/* ── About ── */}
       <section style={{ padding: "0 24px 96px", width: "100%" }}>
-        <RevealSection>
-          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
-            Who I Am
-          </p>
-        </RevealSection>
         <div className="hero-grid">
           <RevealSection delay={100}>
             <PhraseScatter stacked />
           </RevealSection>
-          <RevealSection delay={140}>
-            <VideoEmbed />
-          </RevealSection>
+          <div>
+            <RevealSection>
+              <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
+                Who I Am
+              </p>
+            </RevealSection>
+            <RevealSection delay={140}>
+              <VideoEmbed />
+            </RevealSection>
+          </div>
         </div>
         <RevealSection>
           <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: "56px", marginBottom: "20px" }}>
