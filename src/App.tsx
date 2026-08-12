@@ -283,6 +283,14 @@ const EXTRA_PHRASES = [
 
 const OMITTED_HEADINGS = new Set(["into", "Studying", "Building"]);
 
+// PHRASE_STYLES is assigned by position, not by content — "when i'm
+// offline" happens to land on the 54px (largest) variant, visibly out of
+// scale with its neighbors. Override by heading text instead of
+// reshuffling the style array and risking every other phrase's size.
+const PHRASE_SIZE_OVERRIDES: Record<string, string> = {
+  "when i'm offline": "30px",
+};
+
 /* Fixed set of size/color/weight/style variants — bright, mixed palette —
    so the "scattered" look is consistent across renders instead of relying
    on Math.random(). Libre Baskerville only ships 400/700 (and italic), so
@@ -296,10 +304,6 @@ const PHRASE_STYLES = [
   { fontSize: "26px", color: "#1FAA59", fontWeight: 400, fontStyle: "italic", maxWidth: "200px" },
   { fontSize: "48px", color: "#8B5CF6", fontWeight: 700, fontStyle: "normal", maxWidth: "290px" },
 ];
-
-function truncate(body: string, max = 22) {
-  return body.length > max ? `${body.slice(0, max).trim()}…` : body;
-}
 
 /* Explicit (top%, left%) per phrase — a real 2-D scatter across the full
    width of the canvas. Left values are spread across the whole 0-90% range
@@ -332,11 +336,11 @@ function PhraseScatter({ stacked = false }: { stacked?: boolean }) {
             <ScrambleText
               key={s.heading}
               text={s.heading}
-              hoverText={truncate(s.body)}
+              hoverText={s.body}
               style={{
                 display: "block",
                 fontFamily: "'Libre Baskerville', serif",
-                fontSize: `clamp(22px, 8vw, ${v.fontSize})`,
+                fontSize: `clamp(22px, 8vw, ${PHRASE_SIZE_OVERRIDES[s.heading] ?? v.fontSize})`,
                 fontWeight: v.fontWeight,
                 fontStyle: v.fontStyle,
                 color: v.color,
@@ -366,7 +370,7 @@ function PhraseScatter({ stacked = false }: { stacked?: boolean }) {
           <ScrambleText
             key={s.heading}
             text={s.heading}
-            hoverText={truncate(s.body)}
+            hoverText={s.body}
             style={{
               position: "absolute",
               top: p.top,
@@ -375,7 +379,7 @@ function PhraseScatter({ stacked = false }: { stacked?: boolean }) {
               display: "inline-block",
               maxWidth: v.maxWidth,
               fontFamily: "'Libre Baskerville', serif",
-              fontSize: v.fontSize,
+              fontSize: PHRASE_SIZE_OVERRIDES[s.heading] ?? v.fontSize,
               fontWeight: v.fontWeight,
               fontStyle: v.fontStyle,
               color: v.color,
@@ -395,24 +399,25 @@ function PhraseScatter({ stacked = false }: { stacked?: boolean }) {
 
 /* ─── VideoEmbed ────────────────────────────────────────── */
 /* Same corner-tick frame language as the résumé scanner's ghost document,
-   wrapping a real looping, muted <video>. Full width and centered on
-   mobile since there's no second grid column to share space with there.
-   Served from /public/videos so Vite copies it as-is rather than
-   bundling/hashing a multi-MB asset through the JS graph. */
+   wrapping a real looping, muted <video>. Always fills its container at
+   100% — sizing is the caller's job via a wrapping element with a definite
+   width. (A percentage width here, when the caller's box is itself an
+   "auto"-sized grid/flex track, resolves against the near-zero intrinsic
+   size those tracks fall back to — the video/corner-ticks are all
+   position:absolute so they don't contribute to that intrinsic size — and
+   the whole thing collapses to invisible.) */
 
 const VIDEO_SRC = "/videos/myvideo.mp4";
 
 function VideoEmbed() {
   const { ref, visible } = useReveal();
-  const isMobile = useIsMobile();
 
   return (
     <div
       ref={ref}
       style={{
         position: "relative",
-        width: isMobile ? "100%" : "65%",
-        margin: isMobile ? "0 auto" : undefined,
+        width: "100%",
         aspectRatio: "4 / 5",
         background: "#f9f9f9",
         borderRadius: "16px",
@@ -630,6 +635,9 @@ const HIGHLIGHT_PHRASES = [
   { text: "how products are built", color: "#E1D7F5" }, // lavender
 ];
 
+// TODO: placeholder text, to be replaced
+const HERO_PARAGRAPH_TEXT = "hi , I like to understand how things and people work , create workflows to make lives (or atleast my life) easier and try out things which expand my mind . I am super interested in how products are built, how they influence behaviour, and what happens behind-the-scenes most people never see. take a look around!";
+
 /* ─── closing-line highlight words ─────────────────────── */
 /* Same pastel bleed-through underline as the hero typewriter's highlighted
    phrases, as the shared base — wider letter-spacing than body text and a
@@ -720,7 +728,7 @@ function CognitionHighlight({ text, color }: { text: string; color: string }) {
             justifyContent: "center",
             width: "0.78em",
             height: "0.78em",
-            verticalAlign: "-0.12em",
+            verticalAlign: "-0.02em",
           }}>
             <span style={{ opacity: hovered ? 0 : 1, transition: "opacity 0.15s ease" }}>{ch}</span>
             <Cog
@@ -798,8 +806,24 @@ function buildHighlightSegments(text: string) {
 // plays out while the text is still invisible — it "doesn't work" because
 // it's already finished by the time anyone can see it.
 const HERO_TEXT_REVEAL_START_MS = 850;
-const HIGHLIGHT_MS_PER_CHAR = 45;
-const HIGHLIGHT_GAP_MS = 200;
+const HIGHLIGHT_MS_PER_CHAR = 29;
+const HIGHLIGHT_GAP_MS = 117;
+
+// Same per-phrase duration/gap math as HeroText's own render loop, run
+// once up front so a sibling (the typewriter lines below the paragraph)
+// can know when the underline animations actually finish, instead of
+// guessing a fixed delay that drifts out of sync if the paragraph text
+// changes length.
+function computeHighlightEndMs(text: string) {
+  const segments = buildHighlightSegments(text);
+  let cumulative = 0;
+  segments.forEach((seg) => {
+    if (!seg.highlight) return;
+    const duration = Math.min(1170, Math.max(420, seg.text.length * HIGHLIGHT_MS_PER_CHAR));
+    cumulative += duration + HIGHLIGHT_GAP_MS;
+  });
+  return cumulative;
+}
 
 function HeroText({ text }: { text: string }) {
   const segments = useRef(buildHighlightSegments(text)).current;
@@ -821,7 +845,7 @@ function HeroText({ text }: { text: string }) {
           // at reading speed rather than a fixed-time wipe — and each
           // phrase's delay starts only once the previous one has finished,
           // so the three highlights draw in sequence, not in a burst.
-          const duration = Math.min(1800, Math.max(650, seg.text.length * HIGHLIGHT_MS_PER_CHAR));
+          const duration = Math.min(1170, Math.max(420, seg.text.length * HIGHLIGHT_MS_PER_CHAR));
           const delay = cumulativeDelay;
           cumulativeDelay += duration + HIGHLIGHT_GAP_MS;
           return (
@@ -846,21 +870,28 @@ function HeroText({ text }: { text: string }) {
 /* ─── TypewriterLines ───────────────────────────────────── */
 /* Two lines typed out one at a time, terminal-style, reusing the same
    blinking-cursor class as the résumé scanner's "Scanning_" state. Starts
-   once scrolled into view; the second line only begins after the first
-   finishes typing. */
+   only after the hero paragraph's highlight underlines finish drawing in
+   (via startDelay, computed by computeHighlightEndMs) rather than on its
+   own scroll-visibility, since it sits directly below that paragraph and
+   was starting to type before the highlights above it had settled. The
+   second line only begins after the first finishes typing. */
 
 const TYPEWRITER_LINES = [
   "> building things faster than I can explain them.", // TODO: replace placeholder line
   "> still convinced curiosity beats certainty.", // TODO: replace placeholder line
 ];
 
-function TypewriterLines({ lines }: { lines: string[] }) {
-  const { ref, visible } = useReveal();
+function TypewriterLines({ lines, startDelay = 0 }: { lines: string[]; startDelay?: number }) {
   const [displayed, setDisplayed] = useState<string[]>(() => lines.map(() => ""));
-  const [lineIndex, setLineIndex] = useState(0);
+  const [lineIndex, setLineIndex] = useState(-1);
 
   useEffect(() => {
-    if (!visible || lineIndex >= lines.length) return;
+    const t = setTimeout(() => setLineIndex(0), startDelay);
+    return () => clearTimeout(t);
+  }, [startDelay]);
+
+  useEffect(() => {
+    if (lineIndex < 0 || lineIndex >= lines.length) return;
     const full = lines[lineIndex];
     let i = 0;
     const interval = setInterval(() => {
@@ -876,10 +907,10 @@ function TypewriterLines({ lines }: { lines: string[] }) {
       }
     }, 32);
     return () => clearInterval(interval);
-  }, [visible, lineIndex, lines]);
+  }, [lineIndex, lines]);
 
   return (
-    <div ref={ref} style={{ marginTop: "20px" }}>
+    <div style={{ marginTop: "20px" }}>
       {lines.map((_, i) => (
         <p key={i} style={{
           margin: 0,
@@ -1163,6 +1194,12 @@ export default function App() {
   const resumeOuterRef = useRef<HTMLDivElement>(null);
   const resumeScannerWrapRef = useRef<HTMLDivElement>(null);
   const resumeHeadingTop = useTopOffset(resumeOuterRef, resumeScannerWrapRef, [isMobile, resumeScale]);
+  // Measured on the untransformed row itself (not the phrases div that
+  // gets moved), same split used for heroRef vs. its transformed children
+  // above — measuring an element while also transforming it would feed
+  // back into its own scroll progress.
+  const whoIAmRef = useRef<HTMLDivElement>(null);
+  const whoIAmProgress = useHeroScrollProgress(whoIAmRef);
   return (
     <div style={{ background: "#fff", minHeight: "100vh", fontFamily: "Inter, sans-serif" }}>
       <style>{`
@@ -1315,7 +1352,7 @@ export default function App() {
         </span>
         <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
           {socials.map(({ icon: Icon, label, href }) => (
-            <a key={label} href={href} title={label} className="nav-icon">
+            <a key={label} href={href} title={label} className="nav-icon" target="_blank" rel="noopener noreferrer">
               <Icon size={26} strokeWidth={1.8} />
             </a>
           ))}
@@ -1367,8 +1404,8 @@ export default function App() {
             </div>
             {/* TODO: placeholder text, to be replaced */}
             <div style={{ opacity: 0, animation: "heroIn 0.6s var(--ease-reveal) 220ms forwards", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-              <HeroText text="hi , I like to understand how things and people work , create workflows to make lives (or atleast my life) easier and try out things which expand my mind . I am super interested in how products are built, how they influence behaviour, and what happens behind-the-scenes most people never see. take a look around!" />
-              <TypewriterLines lines={TYPEWRITER_LINES} />
+              <HeroText text={HERO_PARAGRAPH_TEXT} />
+              <TypewriterLines lines={TYPEWRITER_LINES} startDelay={HERO_TEXT_REVEAL_START_MS + computeHighlightEndMs(HERO_PARAGRAPH_TEXT) + 600} />
             </div>
           </div>
 
@@ -1472,20 +1509,60 @@ export default function App() {
 
       {/* ── About ── */}
       <section style={{ padding: "0 24px 96px", width: "100%" }}>
-        <div className="hero-grid">
-          <RevealSection delay={100}>
-            <PhraseScatter stacked />
-          </RevealSection>
-          <div>
-            <RevealSection>
-              <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
-                Who I Am
-              </p>
+        {/* whoIAmRef sits on this untransformed row so its scroll progress
+            can be measured cleanly; only the phrases column inside actually
+            moves. Progress reaches 1 once this row has fully scrolled past
+            the viewport top — right around when "How do I think" arrives —
+            so the phrases translate up and fade out over exactly that
+            transition instead of drifting through the whole About section. */}
+        <div
+          ref={whoIAmRef}
+          style={isMobile ? { display: "flex", flexDirection: "column", gap: "32px" } : {
+            display: "grid",
+            gridTemplateColumns: "1fr auto 1fr",
+            alignItems: "center",
+            gap: "40px",
+            // Reserves enough room for the video's own natural height
+            // (340px wide at a 4:5 aspect ratio ≈ 425px tall) plus the
+            // scroll-driven phrase transform above — without it, the row
+            // sized down to its shortest column and "How do I think"
+            // crowded up against the video's bottom edge.
+            minHeight: "85vh",
+          }}
+        >
+          <div style={{
+            transform: `translateY(${-whoIAmProgress * 80}px)`,
+            opacity: 1 - whoIAmProgress,
+            transition: "transform 0.05s linear, opacity 0.05s linear",
+            pointerEvents: whoIAmProgress > 0.6 ? "none" : "auto",
+          }}>
+            <RevealSection delay={100}>
+              <PhraseScatter stacked />
             </RevealSection>
+          </div>
+
+          {/* Video's own width:100% fills whatever this wrapper gives it —
+              a definite px width here (not a percentage) so the "auto"
+              grid track sizes to it correctly on desktop. */}
+          <div style={{ width: isMobile ? "100%" : "340px" }}>
             <RevealSection delay={140}>
               <VideoEmbed />
             </RevealSection>
           </div>
+
+          <RevealSection>
+            <p style={{
+              fontFamily: "'Chakra Petch', sans-serif",
+              fontSize: "26px",
+              fontWeight: 600,
+              color: "#bbb",
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              textAlign: isMobile ? "left" : "center",
+            }}>
+              Who I Am
+            </p>
+          </RevealSection>
         </div>
         <RevealSection>
           <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: "56px", marginBottom: "20px" }}>
@@ -1527,7 +1604,7 @@ export default function App() {
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
             {socials.map(({ icon: Icon, label, href }) => (
-              <a key={label} href={href} title={label} className="nav-icon" style={{ color: "#ccc" }}>
+              <a key={label} href={href} title={label} className="nav-icon" style={{ color: "#ccc" }} target="_blank" rel="noopener noreferrer">
                 <Icon size={23} strokeWidth={1.8} />
               </a>
             ))}
