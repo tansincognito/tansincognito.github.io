@@ -97,9 +97,9 @@ const panelContent: Record<
   tanishaa: {
     title: "Hi, I'm Tanishaa.",
     sections: [
-      { heading: "what drives me",        body: "the idea there is no one right way to live your life" },
+      { heading: "what drives me",        body: "figuring out my purpose, people and potential" },
       { heading: "why i'm here",    body: "to showcase ideas which I wanted to bring to life in some capacity." },
-      { heading: "when i'm offline", body: "Reading, playing TT, travelling, and honestly just talking to people from different walks of life." },
+      { heading: "when i'm offline", body: "travel , play TT , read , sing" },
       { heading: "into",             body: "Consumer psychology · Workflow Automation· Travel · Music " },
     ],
   },
@@ -109,7 +109,7 @@ const panelContent: Record<
       { heading: "Studying",  body: "Focused on developing in three domains: people , tech and business." }, // TODO: add degree / school
       { heading: "Building",  body: "Side projects tinkering with my high IQ assistant" },
       { heading: "Areas",     body: "Product engg · Consumer tech · Applied Technology · Writing" },
-      { heading: "Open To",   body: "Mutual fit opportunities and sparky comversations " },
+      { heading: "Open To",   body: "Opportunities around consumer tech , travel , AI , enterprise technology" },
     ],
   },
 };
@@ -610,7 +610,7 @@ function HeroName() {
       style={{
         fontFamily: "'Chakra Petch', sans-serif",
         fontWeight: 700,
-        fontSize: "clamp(37px, 6.8vw, 82px)",
+        fontSize: "clamp(42px, 7.4vw, 82px)",
         lineHeight: 0.95,
         color: "#111",
         marginBottom: "28px",
@@ -838,7 +838,7 @@ function HeroText({ text }: { text: string }) {
 
   return (
     <div style={{ marginTop: "32px" }}>
-      <p style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(18px, 2.8vw, 24px)", fontWeight: 400, color: "#111", margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+      <p style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(19px, 3vw, 24px)", fontWeight: 400, color: "#111", margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
         {segments.map((seg, i) => {
           if (!seg.highlight) return <span key={i}>{seg.text}</span>;
           // Duration scales with phrase length — like a highlighter moving
@@ -1448,7 +1448,7 @@ export default function App() {
           title="Plain, semantic-HTML view built for AI agents/crawlers"
           style={{
             fontFamily: "'DM Mono', monospace",
-            fontSize: "14px",
+            fontSize: isMobile ? "11px" : "14px",
             color: "#111",
             letterSpacing: "0.04em",
             background: "none",
@@ -1460,15 +1460,17 @@ export default function App() {
           {agentMode ? "Exit" : "For Agents"}
         </button>
         <div style={{ display: "flex", alignItems: "center" }}>
-          <span style={{
-            fontFamily: "'DM Mono', monospace",
-            fontSize: "14px",
-            color: "#111",
-            letterSpacing: "0.04em",
-            marginRight: "14px",
-          }}>
-            Find me on -&gt;
-          </span>
+          {!isMobile && (
+            <span style={{
+              fontFamily: "'DM Mono', monospace",
+              fontSize: "14px",
+              color: "#111",
+              letterSpacing: "0.04em",
+              marginRight: "14px",
+            }}>
+              Find me on -&gt;
+            </span>
+          )}
           <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
             {socials.map(({ icon: Icon, label, href }) => (
               <a key={label} href={href} title={label} className="nav-icon" target="_blank" rel="noopener noreferrer">
@@ -1515,7 +1517,7 @@ export default function App() {
             <div style={{ opacity: 0, animation: "heroIn 0.6s var(--ease-reveal) 120ms forwards" }}>
               <p style={{
                 fontFamily: "Inter, sans-serif",
-                fontSize: "clamp(14px, 2.1vw, 19px)",
+                fontSize: "clamp(16px, 2.4vw, 19px)",
                 fontWeight: 400,
                 color: "#888",
                 maxWidth: "560px",
