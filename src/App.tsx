@@ -277,7 +277,7 @@ function ScrambleText({ text, hoverText, style }: { text: string; hoverText: str
    body text via ScrambleText. */
 
 const EXTRA_PHRASES = [
-  { heading: "what i've built", body: "A chrome extension, a trip planner, and a laptop dissected — with more in the pipeline." },
+  { heading: "my most reread book is", body: "The Almanack of Naval Ravikant" },
   { heading: "where i'm headed", body: "Toward roles where product thinking, curiosity, and shipping fast all matter." },
 ];
 
@@ -882,6 +882,14 @@ const TYPEWRITER_LINES = [
 
 ];
 
+/* Days alive, computed fresh on each render from birth date (2002-04-28)
+   to now — never hardcoded, so it stays correct as time passes. */
+function daysSinceBirth(): number {
+  const birth = new Date(2002, 3, 28);
+  const now = new Date();
+  return Math.floor((now.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 function TypewriterLines({ lines, startDelay = 0 }: { lines: string[]; startDelay?: number }) {
   const [displayed, setDisplayed] = useState<string[]>(() => lines.map(() => ""));
   const [lineIndex, setLineIndex] = useState(-1);
@@ -921,7 +929,9 @@ function TypewriterLines({ lines, startDelay = 0 }: { lines: string[]; startDela
           color: "#888",
           lineHeight: 1.7,
         }}>
-          {displayed[i]}
+          {displayed[i].split(/(\d[\d,]*)/g).map((chunk, ci) =>
+            /\d/.test(chunk) ? <span key={ci} style={{ color: "#555" }}>{chunk}</span> : chunk
+          )}
           {i === lineIndex && lineIndex < lines.length && <span className="typewriter-cursor">_</span>}
         </p>
       ))}
@@ -1694,6 +1704,12 @@ export default function App() {
                 Who Am I
               </p>
             </RevealSection>
+            <div style={{ textAlign: isMobile ? "left" : "center", transform: isMobile ? undefined : "translateX(5%)" }}>
+              <TypewriterLines
+                lines={[`based on the ${daysSinceBirth().toLocaleString()} days I've been here`]}
+                startDelay={300}
+              />
+            </div>
           </div>
         </div>
         <RevealSection>

@@ -107,7 +107,7 @@ function BrainMesh({ pointerRef, open }: { pointerRef: React.MutableRefObject<Po
 const THOUGHT_NODES = [
   {
     id: "t1",
-    question: "Why does most onboarding fail in the first five minutes?",
+    question: "How does abundant intelligence change what it means to be human?",
     take: "Users scan for the fastest path to value, not the product team's mental model.",
     side: "left" as const,
     subs: [
@@ -118,7 +118,7 @@ const THOUGHT_NODES = [
   },
   {
     id: "t2",
-    question: "Why build tools nobody asked for?",
+    question: "What happens if cloud infra costs increase 3-5x?",
     take: "The best way to understand a workflow is to try to automate it yourself.",
     side: "right" as const,
     subs: [
@@ -129,7 +129,7 @@ const THOUGHT_NODES = [
   },
   {
     id: "t3",
-    question: "What does travel planning get wrong?",
+    question: "If we were living in completely isolated clusters , what would the effect be like?",
     take: "It's a group consensus problem before it's a logistics one.",
     side: "left" as const,
     subs: [
@@ -140,7 +140,7 @@ const THOUGHT_NODES = [
   },
   {
     id: "t4",
-    question: "Why does curiosity compound?",
+    question: "What happens when society optimises only for efficiency?",
     take: "Each answer reveals the shape of the next question.",
     side: "right" as const,
     subs: [
