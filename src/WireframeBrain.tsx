@@ -108,56 +108,57 @@ const THOUGHT_NODES = [
   {
     id: "t1",
     question: "How does abundant intelligence change what it means to be human?",
-    take: "Users scan for the fastest path to value, not the product team's mental model.",
+    take: "> Question changes from do we how to do this to should we",
     side: "left" as const,
     subs: [
-      "The fastest path is rarely the one designers imagine.",
-      "Every extra step costs more attention than it earns trust.",
-      "The first success moment matters more than the full tour.",
+      "Humans can attempt and test many more iterations , judgement becomes crucial",
+      "Physical capacity becomes a bottleneck instead of cognitive capacity , resulting in concentration of power in countries",
+      "Companies become leaner and more of an orchestration layer",
+      
     ],
   },
   {
     id: "t2",
     question: "What happens if cloud infra costs increase 3-5x?",
-    take: "The best way to understand a workflow is to try to automate it yourself.",
+    take: "> Shift from build first culture to a think first culture",
     side: "right" as const,
     subs: [
-      "Automating a task exposes the assumptions hiding inside it.",
-      "Unrequested tools surface needs people hadn't named yet.",
-      "Building it yourself is faster than surveying for permission.",
+      "Hardware optimisation become crucial , cloud only used for heavy workloads",
+      "Industries like tech startups , research highly affected due to high cost of iteration",
+      "Wealth concentration towards energy + infra providers , technological innovation slows down massively",
     ],
   },
   {
     id: "t3",
     question: "If we were living in completely isolated clusters , what would the effect be like?",
-    take: "It's a group consensus problem before it's a logistics one.",
+    take: "> Could be like A/B testing for human civilisations",
     side: "left" as const,
     subs: [
-      "Most apps optimize for one planner, not a group.",
-      "Consensus friction shows up before the itinerary does.",
-      "Logistics are easy once everyone agrees on the plan.",
+      "Migration reduces , local diets and traditions become stronger",
+      "Network connectivity + digital identities become crucial , inhouse resources will increase for each cluster due to trust",
+      "Each cluster functioning can result in a massive parallel experimentation with its own systems, values, technologies and family structures",
     ],
   },
   {
     id: "t4",
-    question: "What happens when society optimises only for efficiency?",
-    take: "Each answer reveals the shape of the next question.",
+    question: "What happens to consumer behaviour in an egalitarian society?",
+    take: ">Products have to be genuinely excellent or extremely cheap",
     side: "right" as const,
     subs: [
-      "Understanding one layer exposes the layer beneath it.",
-      "Good answers are specific enough to provoke better questions.",
-      "Compounding curiosity looks like depth from the outside.",
+      "Products/services which just provide status vanish , affecting industries like precious metals, premium hopsitality",
+      "Consumers focus more on utility, convenience , experiences and durability",
+      "People focus increasingly more on how this makes my life easier , functional consumerism takes place",
     ],
   },
   {
     id: "t5",
-    question: "What makes a system feel alive?",
-    take: "Feedback loops tight enough that cause and effect stay visible.",
+    question: "What happens if an AI can represent you socially?",
+    take: ">Increase in meaningful social interaction , authenticity becomes scarce",
     side: "left" as const,
     subs: [
-      "Delay between action and feedback reads as dead weight.",
-      "Visible cause and effect is what makes a system legible.",
-      "Aliveness is a latency problem as much as a design one.",
+      "You can have configurable personalities for different situations , reduces the inital activation layer",
+      "It can act as a social prosthetic for people who are shy, insecure and create a more relevant social layer",
+      "Businesses could improve , but personal relationships detoriate",
     ],
   },
 ];
@@ -199,7 +200,7 @@ function ThoughtNode({ question, take, subs, shown, delay }: { question: string;
           +
         </span>
       </div>
-      <p style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", color: "#888", lineHeight: 1.5 }}>
+      <p style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", color: "#333", lineHeight: 1.5 }}>
         {take}
       </p>
 

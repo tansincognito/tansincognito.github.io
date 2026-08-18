@@ -10,8 +10,8 @@ import {
   Zap,
   BarChart2,
   Layers,
-  Code2,
   Cog,
+  Puzzle,
 } from "lucide-react";
 
 const WireframeBrain = lazy(() => import("./WireframeBrain"));
@@ -39,13 +39,13 @@ interface Project {
 const projects: Project[] = [
   {
     id: "python-project",
-    name: "Codescope",           // TODO: replace with project name
+    name: "Integrelli",           // TODO: replace with project name
     tagline: "Analyze any python repo",           // TODO: replace
-    description: "Chrome extension to enable first time users understand python based repositories", // TODO: replace
+    description: "Developer tool to help understand , design and debug third party integrations.", // TODO: replace
     stack: ["Python"],                // TODO: replace
     gradient: { from: "#4facfe", to: "#ffd32a" },
-    Icon: Code2,
-    github: "#https://github.com/tan-sinha/Codescope",                      // TODO: replace
+    Icon: Puzzle,
+    github: "https://github.com/tansincognito/integration-translator",                      // TODO: replace
     live: "#",                        // TODO: replace
     active: true,
   },
@@ -54,7 +54,7 @@ const projects: Project[] = [
     name: "TripSync",        // TODO: replace with project name
     tagline: "Plan in minutes instead of weeks/months",           // TODO: replace
     description: "A web app to enable trip planning easier for groups and individuals", // TODO: replace
-    stack: ["TB"],                   // TODO: replace
+    stack: ["React", "Vite", "Tailwind", "Supabase"],
     gradient: { from: "#11998e", to: "#38ef7d" },
     Icon: Briefcase,
     github: "https://github.com/tan-sinha/TripSynce",                      // TODO: replace
@@ -67,11 +67,11 @@ const projects: Project[] = [
     tagline: "Visualise laptop behind-the-scenes",
     description:
       "3-D visualisation of laptops dissembler to understand workflows between hardware triggered by processes.",
-    stack: ["React", "Next.js", "Vercel"],
+    stack: ["React", "Next.js", "Vercel" , "vibe coded"],
     gradient: { from: "#f953c6", to: "#b91d73" },
     Icon: Laptop,
-    github: "#",   // TODO: replace
-    live: "#",     // TODO: replace
+    github: "https://github.com/tansincognito/inside-the-machine",   // TODO: replace
+    live: "https://inside-the-machine.vercel.app/",     // TODO: replace
     active: true,
   },
   { id: "p4", name: "Coming Soon", tagline: "", description: "", stack: [], gradient: { from: "#43e97b", to: "#38f9d7" }, Icon: Zap,      github: "#", live: "#", active: false },
@@ -109,7 +109,7 @@ const panelContent: Record<
       { heading: "Studying",  body: "Focused on developing in three domains: people , tech and business." }, // TODO: add degree / school
       { heading: "Building",  body: "Side projects tinkering with my high IQ assistant" },
       { heading: "Areas",     body: "Product engg · Consumer tech · Applied Technology · Writing" },
-      { heading: "Open To",   body: "Opportunities around consumer tech , travel , AI , enterprise technology" },
+      { heading: "Open To",   body: "Opportunities around consumer tech, travel, AI, enterprise technology" },
     ],
   },
 };
@@ -564,10 +564,10 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
                   ))}
                 </div>
                 <div style={{ display: "flex", gap: 14 }}>
-                  <a href={project.github} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "Inter, sans-serif", fontSize: "11px", color: "#222", fontWeight: 500 }}>
+                  <a href={project.github} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "Inter, sans-serif", fontSize: "11px", color: "#222", fontWeight: 500 }}>
                     <Github size={12} strokeWidth={2} /> GitHub
                   </a>
-                  <a href={project.live} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "Inter, sans-serif", fontSize: "11px", color: project.gradient.from, fontWeight: 600 }}>
+                  <a href={project.live} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "Inter, sans-serif", fontSize: "11px", color: project.gradient.from, fontWeight: 600 }}>
                     <ArrowUpRight size={12} strokeWidth={2} /> Live
                   </a>
                 </div>
@@ -636,7 +636,7 @@ const HIGHLIGHT_PHRASES = [
 ];
 
 // TODO: placeholder text, to be replaced
-const HERO_PARAGRAPH_TEXT = "hi , I like to understand how things and people work , create workflows to make lives (or atleast my life) easier and do things which expand my mind . I am super interested in how products are built, how they influence behaviour, and what happens behind-the-scenes most people never see. take a look around!";
+const HERO_PARAGRAPH_TEXT = "Hi , I like to understand how things and people work , create workflows to make lives (or atleast my life) easier and do things which expand my mind . I am super interested in how products are built, how they influence behaviour, and what happens behind-the-scenes most people never see. take a look around!";
 
 /* ─── closing-line highlight words ─────────────────────── */
 /* Same pastel bleed-through underline as the hero typewriter's highlighted
@@ -890,7 +890,7 @@ function daysSinceBirth(): number {
   return Math.floor((now.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function TypewriterLines({ lines, startDelay = 0 }: { lines: string[]; startDelay?: number }) {
+function TypewriterLines({ lines, startDelay = 0, fontSize = "clamp(13px, 1.6vw, 15px)" }: { lines: string[]; startDelay?: number; fontSize?: string }) {
   const [displayed, setDisplayed] = useState<string[]>(() => lines.map(() => ""));
   const [lineIndex, setLineIndex] = useState(-1);
 
@@ -925,7 +925,7 @@ function TypewriterLines({ lines, startDelay = 0 }: { lines: string[]; startDela
           margin: 0,
           minHeight: "1.7em",
           fontFamily: "'DM Mono', monospace",
-          fontSize: "clamp(13px, 1.6vw, 15px)",
+          fontSize,
           color: "#888",
           lineHeight: 1.7,
         }}>
@@ -1539,7 +1539,7 @@ export default function App() {
             {/* TODO: placeholder text, to be replaced */}
             <div style={{ opacity: 0, animation: "heroIn 0.6s var(--ease-reveal) 220ms forwards", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
               <HeroText text={HERO_PARAGRAPH_TEXT} />
-              <TypewriterLines lines={TYPEWRITER_LINES} startDelay={HERO_TEXT_REVEAL_START_MS + computeHighlightEndMs(HERO_PARAGRAPH_TEXT) + 600} />
+              <TypewriterLines lines={TYPEWRITER_LINES} startDelay={HERO_TEXT_REVEAL_START_MS + computeHighlightEndMs(HERO_PARAGRAPH_TEXT) + 600} fontSize="clamp(14px, 1.75vw, 16px)" />
             </div>
           </div>
 
@@ -1690,7 +1690,13 @@ export default function App() {
             </RevealSection>
           </div>
 
-          <div style={{ order: isMobile ? 1 : undefined }}>
+          <div style={{
+            order: isMobile ? 1 : undefined,
+            transform: `translateX(${whoIAmProgress * 80}px)`,
+            opacity: 1 - whoIAmProgress,
+            transition: "transform 0.05s linear, opacity 0.05s linear",
+            pointerEvents: whoIAmProgress > 0.6 ? "none" : "auto",
+          }}>
             <RevealSection>
               <p style={{
                 fontFamily: "'Chakra Petch', sans-serif",
@@ -1704,10 +1710,11 @@ export default function App() {
                 Who Am I
               </p>
             </RevealSection>
-            <div style={{ textAlign: isMobile ? "left" : "center", transform: isMobile ? undefined : "translateX(5%)" }}>
+            <div style={{ textAlign: isMobile ? "left" : "center", transform: isMobile ? undefined : "translateX(calc(5% - 4px))" }}>
               <TypewriterLines
                 lines={[`based on the ${daysSinceBirth().toLocaleString()} days I've been here`]}
                 startDelay={300}
+                fontSize="clamp(15px, 1.9vw, 18px)"
               />
             </div>
           </div>
