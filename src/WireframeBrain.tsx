@@ -205,7 +205,7 @@ function ThoughtNode({ question, take, subs, shown, delay }: { question: string;
       </p>
 
       <div style={{
-        maxHeight: expanded ? "200px" : "0px",
+        maxHeight: expanded ? "280px" : "0px",
         opacity: expanded ? 1 : 0,
         overflow: "hidden",
         transition: "max-height 0.35s ease, opacity 0.3s ease",
