@@ -45,8 +45,8 @@ const projects: Project[] = [
     stack: ["Python"],                // TODO: replace
     gradient: { from: "#4facfe", to: "#ffd32a" },
     Icon: Puzzle,
-    github: "https://github.com/tansincognito/integration-translator",                      // TODO: replace
-    live: "#",                        // TODO: replace
+    github: "https://github.com/tansincognito/integrelli",                      // TODO: replace
+    live: "https://integrelli.vercel.app",                        // TODO: replace
     active: true,
   },
   {
