@@ -1210,6 +1210,59 @@ function RevealSection({ children, delay = 0 }: { children: React.ReactNode; del
   );
 }
 
+/* ─── PositioningGraph ──────────────────────────────────── */
+/* A DEEP/BROAD × GENERALIST quadrant chart plotting where each skill or
+   trait sits along depth vs. breadth. Plain line-art SVG (axes, arrowheads,
+   dots) rather than a charting lib — same flat, wireframe register as the
+   rest of the page, and it's eleven static points, not live data. */
+
+const POSITIONING_POINTS: { label: string; x: number; y: number; align?: "start" | "end" | "middle"; dy?: number }[] = [
+  { label: "System Design", x: 330, y: 60 },
+  { label: "Backend / APIs", x: 320, y: 95 },
+  { label: "Python", x: 300, y: 140 },
+  { label: "AI Systems", x: 385, y: 178 },
+  { label: "Ownership", x: 235, y: 212, align: "end" },
+  { label: "Automation", x: 378, y: 248 },
+  { label: "Problem Framing", x: 225, y: 290, align: "middle", dy: 20 },
+  { label: "Systems Thinking", x: 205, y: 345, align: "end" },
+  { label: "Product Thinking", x: 372, y: 345 },
+  { label: "Communication", x: 300, y: 388, align: "middle", dy: 20 },
+  { label: "Research", x: 280, y: 425, align: "middle", dy: 20 },
+];
+
+const POSITIONING_AXIS_LABEL_STYLE = { fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: "13px", letterSpacing: "0.08em", fill: "#999" } as const;
+const POSITIONING_POINT_LABEL_STYLE = { fontFamily: "'DM Mono', monospace", fontSize: "12px", fill: "#444" } as const;
+
+function PositioningGraph() {
+  return (
+    <svg viewBox="0 0 640 480" style={{ width: "100%", maxWidth: "640px", height: "auto", overflow: "visible", display: "block", margin: "0 auto" }}>
+      {/* horizontal axis — BROAD */}
+      <line x1="20" y1="290" x2="590" y2="290" stroke="#ddd" strokeWidth="1" />
+      <polygon points="590,284 605,290 590,296" fill="#ddd" />
+      <text x="613" y="295" style={POSITIONING_AXIS_LABEL_STYLE} textAnchor="start">BROAD</text>
+
+      {/* vertical axis — DEEP / GENERALIST */}
+      <line x1="260" y1="445" x2="260" y2="28" stroke="#ddd" strokeWidth="1" />
+      <polygon points="254,28 260,13 266,28" fill="#ddd" />
+      <text x="260" y="8" style={POSITIONING_AXIS_LABEL_STYLE} textAnchor="middle">DEEP</text>
+      <polygon points="254,445 260,460 266,445" fill="#ddd" />
+      <text x="260" y="476" style={POSITIONING_AXIS_LABEL_STYLE} textAnchor="middle">GENERALIST</text>
+
+      {POSITIONING_POINTS.map((p) => {
+        const align = p.align ?? "start";
+        const dx = align === "start" ? 9 : align === "end" ? -9 : 0;
+        const dy = p.dy ?? 4;
+        return (
+          <g key={p.label}>
+            <circle cx={p.x} cy={p.y} r={4} fill="#111" />
+            <text x={p.x + dx} y={p.y + dy} style={POSITIONING_POINT_LABEL_STYLE} textAnchor={align}>{p.label}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 /* ─── Agent mode ────────────────────────────────────────── */
 /* AI crawlers/agents (GPTBot, ClaudeBot, PerplexityBot, etc.) get a plain,
    semantic-HTML summary instead of the full animated/WebGL/video
@@ -1639,6 +1692,18 @@ export default function App() {
             </RevealSection>
           </div>
         </div>
+      </section>
+
+      {/* ── Positioning ── */}
+      <section style={{ padding: "0 24px 96px", width: "100%" }}>
+        <RevealSection>
+          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
+            Here Is How I Will Position Myself
+          </p>
+        </RevealSection>
+        <RevealSection delay={100}>
+          <PositioningGraph />
+        </RevealSection>
       </section>
 
       {/* ── About ── */}
