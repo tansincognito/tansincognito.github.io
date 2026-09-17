@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense, Fragment } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
 import {
   Github,
   Twitter,
@@ -1217,86 +1217,115 @@ function RevealSection({ children, delay = 0 }: { children: React.ReactNode; del
   );
 }
 
-/* ─── PositioningMatrix ─────────────────────────────────── */
-/* Deep/Broad × Technical/Product-Human, as a 2x2 matrix rather than a
-   scatter chart — each cell lists its traits as pill chips, colored from
-   the same "from" swatches used across the project-card gradients (see
-   `projects` above) so the chart reads as part of the same palette. */
+/* ─── PositioningGraph ──────────────────────────────────── */
+/* Deep/Broad (vertical) x Technical/Product-Human (horizontal) scatter
+   chart — same four groups as the reference matrix, plotted as points
+   instead of table cells. Dot colors cycle through the same "from"
+   swatches used across the project-card gradients (see `projects` above)
+   so the chart reads as part of the same palette. */
 
 const POSITIONING_PALETTE = ["#4facfe", "#11998e", "#f953c6", "#43e97b", "#667eea", "#f093fb"];
 
-const POSITIONING_ROWS = ["Deep", "Broad"] as const;
-const POSITIONING_COLS = ["Technical", "Product / Human"] as const;
-
-const POSITIONING_CELLS: Record<(typeof POSITIONING_ROWS)[number], Record<(typeof POSITIONING_COLS)[number], string[]>> = {
-  Deep: {
-    Technical: ["Backend", "APIs", "System Design", "Microservices"],
-    "Product / Human": ["Problem Framing", "Product Thinking", "Communication", "Ownership"],
+// x/y are quadrant-relative offsets (0..1); resolved to viewBox coordinates
+// in PositioningGraph based on which quadrant they belong to.
+const POSITIONING_QUADRANTS: { align: "start" | "end"; items: { label: string; t: number }[] }[] = [
+  {
+    // top-left: Deep x Technical
+    align: "start",
+    items: [
+      { label: "System Design", t: 0 },
+      { label: "Backend", t: 0.32 },
+      { label: "APIs", t: 0.64 },
+      { label: "Microservices", t: 0.96 },
+    ],
   },
-  Broad: {
-    Technical: ["AI / LLMs", "DevOps", "Automation", "Integrations", "Data", "Testing"],
-    "Product / Human": ["Research", "User Empathy", "Adaptability", "Cross-functional Thinking"],
+  {
+    // top-right: Deep x Product/Human
+    align: "end",
+    items: [
+      { label: "Problem Framing", t: 0 },
+      { label: "Product Thinking", t: 0.32 },
+      { label: "Communication", t: 0.64 },
+      { label: "Ownership", t: 0.96 },
+    ],
   },
-};
+  {
+    // bottom-left: Broad x Technical
+    align: "start",
+    items: [
+      { label: "AI / LLMs", t: 0 },
+      { label: "DevOps", t: 0.2 },
+      { label: "Automation", t: 0.4 },
+      { label: "Integrations", t: 0.6 },
+      { label: "Data", t: 0.8 },
+      { label: "Testing", t: 1 },
+    ],
+  },
+  {
+    // bottom-right: Broad x Product/Human
+    align: "end",
+    items: [
+      { label: "Research", t: 0 },
+      { label: "User Empathy", t: 0.32 },
+      { label: "Adaptability", t: 0.64 },
+      { label: "Cross-functional Thinking", t: 0.96 },
+    ],
+  },
+];
 
-const POSITIONING_ROW_LABEL_STYLE = { fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: "16px", letterSpacing: "0.04em", color: "#111" } as const;
-const POSITIONING_COL_LABEL_STYLE = { fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: "13px", letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "#999" };
+const POSITIONING_AXIS_LABEL_STYLE = { fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: "13px", letterSpacing: "0.08em", fill: "#999" } as const;
+const POSITIONING_POINT_LABEL_STYLE = { fontFamily: "'DM Mono', monospace", fontSize: "12px", fill: "#444" } as const;
 
-function PositioningChip({ label, color }: { label: string; color: string }) {
+function PositioningGraph() {
+  const axisX = 350;
+  const axisTop = 30;
+  const axisBottom = 490;
+  const axisLeft = 20;
+  const axisRight = 680;
+  const axisY = 260;
+
+  const quadrantBounds = [
+    { x0: 70, x1: 320, y0: 45, y1: 235 }, // top-left
+    { x0: 380, x1: 650, y0: 45, y1: 235 }, // top-right
+    { x0: 70, x1: 320, y0: 285, y1: 475 }, // bottom-left
+    { x0: 380, x1: 650, y0: 285, y1: 475 }, // bottom-right
+  ];
+
   return (
-    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "11px", color, background: `${color}1c`, padding: "4px 10px", borderRadius: 999, fontWeight: 500 }}>
-      {label}
-    </span>
-  );
-}
+    <svg viewBox="0 0 700 540" style={{ width: "100%", maxWidth: "700px", height: "auto", overflow: "visible", display: "block", margin: "0 auto" }}>
+      {/* horizontal axis — TECHNICAL / PRODUCT & HUMAN. Labels sit just
+          inside the arrows (in the blank gap between the quadrant rows)
+          rather than past the line ends, so they stay inside the viewBox
+          instead of relying on overflow past the body's overflow-x:hidden. */}
+      <line x1={axisLeft} y1={axisY} x2={axisRight} y2={axisY} stroke="#ddd" strokeWidth="1" />
+      <polygon points={`${axisLeft + 15},${axisY - 6} ${axisLeft},${axisY} ${axisLeft + 15},${axisY + 6}`} fill="#ddd" />
+      <text x={axisLeft + 25} y={axisY - 10} style={POSITIONING_AXIS_LABEL_STYLE} textAnchor="start">TECHNICAL</text>
+      <polygon points={`${axisRight - 15},${axisY - 6} ${axisRight},${axisY} ${axisRight - 15},${axisY + 6}`} fill="#ddd" />
+      <text x={axisRight - 25} y={axisY - 10} style={POSITIONING_AXIS_LABEL_STYLE} textAnchor="end">PRODUCT / HUMAN</text>
 
-function PositioningCell({ items, colorOffset }: { items: string[]; colorOffset: number }) {
-  return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-      {items.map((label, i) => (
-        <PositioningChip key={label} label={label} color={POSITIONING_PALETTE[(colorOffset + i) % POSITIONING_PALETTE.length]} />
-      ))}
-    </div>
-  );
-}
+      {/* vertical axis — DEEP / BROAD */}
+      <line x1={axisX} y1={axisBottom} x2={axisX} y2={axisTop} stroke="#ddd" strokeWidth="1" />
+      <polygon points={`${axisX - 6},${axisTop + 15} ${axisX},${axisTop} ${axisX + 6},${axisTop + 15}`} fill="#ddd" />
+      <text x={axisX} y={axisTop - 10} style={POSITIONING_AXIS_LABEL_STYLE} textAnchor="middle">DEEP</text>
+      <polygon points={`${axisX - 6},${axisBottom - 15} ${axisX},${axisBottom} ${axisX + 6},${axisBottom - 15}`} fill="#ddd" />
+      <text x={axisX} y={axisBottom + 24} style={POSITIONING_AXIS_LABEL_STYLE} textAnchor="middle">BROAD</text>
 
-function PositioningMatrix() {
-  const isMobile = useIsMobile();
-
-  if (isMobile) {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-        {POSITIONING_ROWS.flatMap((row, ri) =>
-          POSITIONING_COLS.map((col, ci) => (
-            <div key={`${row}-${col}`}>
-              <p style={{ ...POSITIONING_ROW_LABEL_STYLE, marginBottom: 10 }}>
-                {row} <span style={{ color: "#bbb", fontWeight: 500 }}>· {col}</span>
-              </p>
-              <PositioningCell items={POSITIONING_CELLS[row][col]} colorOffset={(ri * 2 + ci) * 3} />
-            </div>
-          ))
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "130px 1fr 1fr", columnGap: 32 }}>
-      <div style={{ borderBottom: "1px solid #eee" }} />
-      {POSITIONING_COLS.map((col) => (
-        <p key={col} style={{ ...POSITIONING_COL_LABEL_STYLE, paddingBottom: 14, borderBottom: "1px solid #eee" }}>{col}</p>
-      ))}
-      {POSITIONING_ROWS.map((row, ri) => (
-        <Fragment key={row}>
-          <p style={{ ...POSITIONING_ROW_LABEL_STYLE, paddingTop: 20, borderTop: ri > 0 ? "1px solid #eee" : "none" }}>{row}</p>
-          {POSITIONING_COLS.map((col, ci) => (
-            <div key={col} style={{ paddingTop: 20, borderTop: ri > 0 ? "1px solid #eee" : "none", display: "flex", alignItems: "flex-start" }}>
-              <PositioningCell items={POSITIONING_CELLS[row][col]} colorOffset={(ri * 2 + ci) * 3} />
-            </div>
-          ))}
-        </Fragment>
-      ))}
-    </div>
+      {POSITIONING_QUADRANTS.map((q, qi) => {
+        const bounds = quadrantBounds[qi];
+        const dotX = q.align === "start" ? bounds.x0 : bounds.x1;
+        const labelDx = q.align === "start" ? 10 : -10;
+        return q.items.map((p, i) => {
+          const y = bounds.y0 + p.t * (bounds.y1 - bounds.y0);
+          const color = POSITIONING_PALETTE[(qi * 3 + i) % POSITIONING_PALETTE.length];
+          return (
+            <g key={p.label}>
+              <circle cx={dotX} cy={y} r={4} fill={color} />
+              <text x={dotX + labelDx} y={y + 4} style={POSITIONING_POINT_LABEL_STYLE} textAnchor={q.align}>{p.label}</text>
+            </g>
+          );
+        });
+      })}
+    </svg>
   );
 }
 
@@ -1734,7 +1763,7 @@ export default function App() {
       {/* ── Positioning ── */}
       <section style={{ padding: "0 24px 96px", width: "100%" }}>
         <RevealSection>
-          <PositioningMatrix />
+          <PositioningGraph />
         </RevealSection>
       </section>
 
