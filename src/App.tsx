@@ -1216,6 +1216,11 @@ function RevealSection({ children, delay = 0 }: { children: React.ReactNode; del
    dots) rather than a charting lib — same flat, wireframe register as the
    rest of the page, and it's eleven static points, not live data. */
 
+// Same "from" swatches used across the project-card gradients (see `projects`
+// below), cycled per point so the chart reads as part of the same palette
+// instead of introducing new colors.
+const POSITIONING_PALETTE = ["#4facfe", "#11998e", "#f953c6", "#43e97b", "#667eea", "#f093fb"];
+
 const POSITIONING_POINTS: { label: string; x: number; y: number; align?: "start" | "end" | "middle"; dy?: number }[] = [
   { label: "System Design", x: 330, y: 60 },
   { label: "Backend / APIs", x: 320, y: 95 },
@@ -1232,6 +1237,7 @@ const POSITIONING_POINTS: { label: string; x: number; y: number; align?: "start"
 
 const POSITIONING_AXIS_LABEL_STYLE = { fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: "13px", letterSpacing: "0.08em", fill: "#999" } as const;
 const POSITIONING_POINT_LABEL_STYLE = { fontFamily: "'DM Mono', monospace", fontSize: "12px", fill: "#444" } as const;
+const POSITIONING_ZONE_LABEL_STYLE = { fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: "16px", letterSpacing: "0.08em", fill: "#ccc", textTransform: "uppercase" } as const;
 
 function PositioningGraph() {
   return (
@@ -1248,13 +1254,18 @@ function PositioningGraph() {
       <polygon points="254,445 260,460 266,445" fill="#ddd" />
       <text x="260" y="476" style={POSITIONING_AXIS_LABEL_STYLE} textAnchor="middle">GENERALIST</text>
 
-      {POSITIONING_POINTS.map((p) => {
+      {/* zone labels */}
+      <text x="45" y="240" style={POSITIONING_ZONE_LABEL_STYLE} textAnchor="start">Technical Generalist</text>
+      <text x="555" y="240" style={POSITIONING_ZONE_LABEL_STYLE} textAnchor="end">Product Engineer</text>
+
+      {POSITIONING_POINTS.map((p, i) => {
         const align = p.align ?? "start";
         const dx = align === "start" ? 9 : align === "end" ? -9 : 0;
         const dy = p.dy ?? 4;
+        const color = POSITIONING_PALETTE[i % POSITIONING_PALETTE.length];
         return (
           <g key={p.label}>
-            <circle cx={p.x} cy={p.y} r={4} fill="#111" />
+            <circle cx={p.x} cy={p.y} r={4} fill={color} />
             <text x={p.x + dx} y={p.y + dy} style={POSITIONING_POINT_LABEL_STYLE} textAnchor={align}>{p.label}</text>
           </g>
         );
@@ -1697,11 +1708,6 @@ export default function App() {
       {/* ── Positioning ── */}
       <section style={{ padding: "0 24px 96px", width: "100%" }}>
         <RevealSection>
-          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
-            Here Is How I Will Position Myself
-          </p>
-        </RevealSection>
-        <RevealSection delay={100}>
           <PositioningGraph />
         </RevealSection>
       </section>
