@@ -42,7 +42,7 @@ const projects: Project[] = [
     name: "Integrelli",           // TODO: replace with project name
     tagline: "Analyze any python repo",           // TODO: replace
     description: "Developer tool to help understand , design and debug third party integrations.", // TODO: replace
-    stack: ["Python"],                // TODO: replace
+    stack: ["Next.js", "TypeScript", "Tailwind", "Zustand", "Zod"],
     gradient: { from: "#4facfe", to: "#ffd32a" },
     Icon: Puzzle,
     github: "https://github.com/tansincognito/integrelli",                      // TODO: replace
