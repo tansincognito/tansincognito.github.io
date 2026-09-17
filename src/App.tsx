@@ -1226,49 +1226,49 @@ function RevealSection({ children, delay = 0 }: { children: React.ReactNode; del
 
 const POSITIONING_PALETTE = ["#4facfe", "#11998e", "#f953c6", "#43e97b", "#667eea", "#f093fb"];
 
-// x/y are quadrant-relative offsets (0..1); resolved to viewBox coordinates
-// in PositioningGraph based on which quadrant they belong to.
-const POSITIONING_QUADRANTS: { align: "start" | "end"; items: { label: string; t: number }[] }[] = [
+// tx/ty are independent quadrant-relative offsets (0..1) for each point, so
+// points scatter across both axes instead of stacking along a single line;
+// resolved to viewBox coordinates in PositioningGraph.
+const POSITIONING_QUADRANTS: { align: "start" | "end"; items: { label: string; tx: number; ty: number }[] }[] = [
   {
     // top-left: Deep x Technical
     align: "start",
     items: [
-      { label: "System Design", t: 0 },
-      { label: "Backend", t: 0.32 },
-      { label: "APIs", t: 0.64 },
-      { label: "Microservices", t: 0.96 },
+      { label: "System Design", tx: 0.15, ty: 0.05 },
+      { label: "Backend", tx: 0.05, ty: 0.3 },
+      { label: "APIs", tx: 0.4, ty: 0.5 },
+      { label: "Automation", tx: 0.6, ty: 0.72 },
+      { label: "Microservices", tx: 0.2, ty: 0.95 },
     ],
   },
   {
     // top-right: Deep x Product/Human
     align: "end",
     items: [
-      { label: "Problem Framing", t: 0 },
-      { label: "Product Thinking", t: 0.32 },
-      { label: "Communication", t: 0.64 },
-      { label: "Ownership", t: 0.96 },
+      { label: "Problem Framing", tx: 0.85, ty: 0.05 },
+      { label: "Product Thinking", tx: 0.65, ty: 0.32 },
+      { label: "Communication", tx: 0.9, ty: 0.6 },
+      { label: "Ownership", tx: 0.65, ty: 0.92 },
     ],
   },
   {
     // bottom-left: Broad x Technical
     align: "start",
     items: [
-      { label: "AI / LLMs", t: 0 },
-      { label: "DevOps", t: 0.2 },
-      { label: "Automation", t: 0.4 },
-      { label: "Integrations", t: 0.6 },
-      { label: "Data", t: 0.8 },
-      { label: "Testing", t: 1 },
+      { label: "Intelligent Systems / AI", tx: 0.05, ty: 0.05 },
+      { label: "DevOps", tx: 0.4, ty: 0.35 },
+      { label: "Integrations", tx: 0.15, ty: 0.65 },
+      { label: "Testing", tx: 0.5, ty: 0.95 },
     ],
   },
   {
     // bottom-right: Broad x Product/Human
     align: "end",
     items: [
-      { label: "Research", t: 0 },
-      { label: "User Empathy", t: 0.32 },
-      { label: "Adaptability", t: 0.64 },
-      { label: "Cross-functional Thinking", t: 0.96 },
+      { label: "Research", tx: 0.85, ty: 0.05 },
+      { label: "User Empathy", tx: 0.6, ty: 0.35 },
+      { label: "Adaptability", tx: 0.9, ty: 0.65 },
+      { label: "Cross-functional Thinking", tx: 0.65, ty: 0.95 },
     ],
   },
 ];
@@ -1312,15 +1312,15 @@ function PositioningGraph() {
 
       {POSITIONING_QUADRANTS.map((q, qi) => {
         const bounds = quadrantBounds[qi];
-        const dotX = q.align === "start" ? bounds.x0 : bounds.x1;
         const labelDx = q.align === "start" ? 10 : -10;
         return q.items.map((p, i) => {
-          const y = bounds.y0 + p.t * (bounds.y1 - bounds.y0);
+          const x = bounds.x0 + p.tx * (bounds.x1 - bounds.x0);
+          const y = bounds.y0 + p.ty * (bounds.y1 - bounds.y0);
           const color = POSITIONING_PALETTE[(qi * 3 + i) % POSITIONING_PALETTE.length];
           return (
             <g key={p.label}>
-              <circle cx={dotX} cy={y} r={4} fill={color} />
-              <text x={dotX + labelDx} y={y + 4} style={POSITIONING_POINT_LABEL_STYLE} textAnchor={q.align}>{p.label}</text>
+              <circle cx={x} cy={y} r={4} fill={color} />
+              <text x={x + labelDx} y={y + 4} style={POSITIONING_POINT_LABEL_STYLE} textAnchor={q.align}>{p.label}</text>
             </g>
           );
         });
