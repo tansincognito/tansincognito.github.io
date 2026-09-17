@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense, Fragment } from "react";
 import {
   Github,
   Twitter,
@@ -486,6 +486,13 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         transform: visible ? "translateY(0)" : "translateY(28px)",
         transition: `opacity var(--dur-base) var(--ease-reveal) ${80 + index * 55}ms, transform var(--dur-base) var(--ease-reveal) ${80 + index * 55}ms`,
         position: "relative",
+        // Each card is its own stacking context (the transform above forces
+        // that), so the mobile popup's z-index only ever wins against ITS
+        // OWN siblings — not against the card in the grid row below, which
+        // sits later in DOM order and would otherwise paint (and intercept
+        // taps) on top of an open popup. Promoting the whole card's z-index
+        // while its popup is open lifts it above every other grid item.
+        zIndex: hovered ? 5 : 0,
         filter: project.active ? "none" : "saturate(0.3)",
       }}
       onMouseEnter={() => { if (project.active && !isMobile) setHovered(true); }}
@@ -564,10 +571,10 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
                   ))}
                 </div>
                 <div style={{ display: "flex", gap: 14 }}>
-                  <a href={project.github} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "Inter, sans-serif", fontSize: "11px", color: "#222", fontWeight: 500 }}>
+                  <a href={project.github} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "Inter, sans-serif", fontSize: "11px", color: "#222", fontWeight: 500 }}>
                     <Github size={12} strokeWidth={2} /> GitHub
                   </a>
-                  <a href={project.live} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "Inter, sans-serif", fontSize: "11px", color: project.gradient.from, fontWeight: 600 }}>
+                  <a href={project.live} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "Inter, sans-serif", fontSize: "11px", color: project.gradient.from, fontWeight: 600 }}>
                     <ArrowUpRight size={12} strokeWidth={2} /> Live
                   </a>
                 </div>
@@ -1210,67 +1217,86 @@ function RevealSection({ children, delay = 0 }: { children: React.ReactNode; del
   );
 }
 
-/* ─── PositioningGraph ──────────────────────────────────── */
-/* A DEEP/BROAD × GENERALIST quadrant chart plotting where each skill or
-   trait sits along depth vs. breadth. Plain line-art SVG (axes, arrowheads,
-   dots) rather than a charting lib — same flat, wireframe register as the
-   rest of the page, and it's eleven static points, not live data. */
+/* ─── PositioningMatrix ─────────────────────────────────── */
+/* Deep/Broad × Technical/Product-Human, as a 2x2 matrix rather than a
+   scatter chart — each cell lists its traits as pill chips, colored from
+   the same "from" swatches used across the project-card gradients (see
+   `projects` above) so the chart reads as part of the same palette. */
 
-// Same "from" swatches used across the project-card gradients (see `projects`
-// below), cycled per point so the chart reads as part of the same palette
-// instead of introducing new colors.
 const POSITIONING_PALETTE = ["#4facfe", "#11998e", "#f953c6", "#43e97b", "#667eea", "#f093fb"];
 
-const POSITIONING_POINTS: { label: string; x: number; y: number; align?: "start" | "end" | "middle"; dy?: number }[] = [
-  { label: "System Design", x: 330, y: 60 },
-  { label: "Backend / APIs", x: 320, y: 95 },
-  { label: "Python", x: 300, y: 140 },
-  { label: "AI Systems", x: 385, y: 178 },
-  { label: "Ownership", x: 235, y: 212, align: "end" },
-  { label: "Automation", x: 378, y: 248 },
-  { label: "Problem Framing", x: 225, y: 290, align: "middle", dy: 20 },
-  { label: "Systems Thinking", x: 205, y: 345, align: "end" },
-  { label: "Product Thinking", x: 372, y: 345 },
-  { label: "Communication", x: 300, y: 388, align: "middle", dy: 20 },
-  { label: "Research", x: 280, y: 425, align: "middle", dy: 20 },
-];
+const POSITIONING_ROWS = ["Deep", "Broad"] as const;
+const POSITIONING_COLS = ["Technical", "Product / Human"] as const;
 
-const POSITIONING_AXIS_LABEL_STYLE = { fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: "13px", letterSpacing: "0.08em", fill: "#999" } as const;
-const POSITIONING_POINT_LABEL_STYLE = { fontFamily: "'DM Mono', monospace", fontSize: "12px", fill: "#444" } as const;
-const POSITIONING_ZONE_LABEL_STYLE = { fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: "16px", letterSpacing: "0.08em", fill: "#ccc", textTransform: "uppercase" } as const;
+const POSITIONING_CELLS: Record<(typeof POSITIONING_ROWS)[number], Record<(typeof POSITIONING_COLS)[number], string[]>> = {
+  Deep: {
+    Technical: ["Backend", "APIs", "System Design", "Microservices"],
+    "Product / Human": ["Problem Framing", "Product Thinking", "Communication", "Ownership"],
+  },
+  Broad: {
+    Technical: ["AI / LLMs", "DevOps", "Automation", "Integrations", "Data", "Testing"],
+    "Product / Human": ["Research", "User Empathy", "Adaptability", "Cross-functional Thinking"],
+  },
+};
 
-function PositioningGraph() {
+const POSITIONING_ROW_LABEL_STYLE = { fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: "16px", letterSpacing: "0.04em", color: "#111" } as const;
+const POSITIONING_COL_LABEL_STYLE = { fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: "13px", letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "#999" };
+
+function PositioningChip({ label, color }: { label: string; color: string }) {
   return (
-    <svg viewBox="0 0 640 480" style={{ width: "100%", maxWidth: "640px", height: "auto", overflow: "visible", display: "block", margin: "0 auto" }}>
-      {/* horizontal axis — BROAD */}
-      <line x1="20" y1="290" x2="590" y2="290" stroke="#ddd" strokeWidth="1" />
-      <polygon points="590,284 605,290 590,296" fill="#ddd" />
-      <text x="613" y="295" style={POSITIONING_AXIS_LABEL_STYLE} textAnchor="start">BROAD</text>
+    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "11px", color, background: `${color}1c`, padding: "4px 10px", borderRadius: 999, fontWeight: 500 }}>
+      {label}
+    </span>
+  );
+}
 
-      {/* vertical axis — DEEP / GENERALIST */}
-      <line x1="260" y1="445" x2="260" y2="28" stroke="#ddd" strokeWidth="1" />
-      <polygon points="254,28 260,13 266,28" fill="#ddd" />
-      <text x="260" y="8" style={POSITIONING_AXIS_LABEL_STYLE} textAnchor="middle">DEEP</text>
-      <polygon points="254,445 260,460 266,445" fill="#ddd" />
-      <text x="260" y="476" style={POSITIONING_AXIS_LABEL_STYLE} textAnchor="middle">GENERALIST</text>
+function PositioningCell({ items, colorOffset }: { items: string[]; colorOffset: number }) {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+      {items.map((label, i) => (
+        <PositioningChip key={label} label={label} color={POSITIONING_PALETTE[(colorOffset + i) % POSITIONING_PALETTE.length]} />
+      ))}
+    </div>
+  );
+}
 
-      {/* zone labels */}
-      <text x="45" y="240" style={POSITIONING_ZONE_LABEL_STYLE} textAnchor="start">Technical Generalist</text>
-      <text x="555" y="240" style={POSITIONING_ZONE_LABEL_STYLE} textAnchor="end">Product Engineer</text>
+function PositioningMatrix() {
+  const isMobile = useIsMobile();
 
-      {POSITIONING_POINTS.map((p, i) => {
-        const align = p.align ?? "start";
-        const dx = align === "start" ? 9 : align === "end" ? -9 : 0;
-        const dy = p.dy ?? 4;
-        const color = POSITIONING_PALETTE[i % POSITIONING_PALETTE.length];
-        return (
-          <g key={p.label}>
-            <circle cx={p.x} cy={p.y} r={4} fill={color} />
-            <text x={p.x + dx} y={p.y + dy} style={POSITIONING_POINT_LABEL_STYLE} textAnchor={align}>{p.label}</text>
-          </g>
-        );
-      })}
-    </svg>
+  if (isMobile) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+        {POSITIONING_ROWS.flatMap((row, ri) =>
+          POSITIONING_COLS.map((col, ci) => (
+            <div key={`${row}-${col}`}>
+              <p style={{ ...POSITIONING_ROW_LABEL_STYLE, marginBottom: 10 }}>
+                {row} <span style={{ color: "#bbb", fontWeight: 500 }}>· {col}</span>
+              </p>
+              <PositioningCell items={POSITIONING_CELLS[row][col]} colorOffset={(ri * 2 + ci) * 3} />
+            </div>
+          ))
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "130px 1fr 1fr", columnGap: 32 }}>
+      <div style={{ borderBottom: "1px solid #eee" }} />
+      {POSITIONING_COLS.map((col) => (
+        <p key={col} style={{ ...POSITIONING_COL_LABEL_STYLE, paddingBottom: 14, borderBottom: "1px solid #eee" }}>{col}</p>
+      ))}
+      {POSITIONING_ROWS.map((row, ri) => (
+        <Fragment key={row}>
+          <p style={{ ...POSITIONING_ROW_LABEL_STYLE, paddingTop: 20, borderTop: ri > 0 ? "1px solid #eee" : "none" }}>{row}</p>
+          {POSITIONING_COLS.map((col, ci) => (
+            <div key={col} style={{ paddingTop: 20, borderTop: ri > 0 ? "1px solid #eee" : "none", display: "flex", alignItems: "flex-start" }}>
+              <PositioningCell items={POSITIONING_CELLS[row][col]} colorOffset={(ri * 2 + ci) * 3} />
+            </div>
+          ))}
+        </Fragment>
+      ))}
+    </div>
   );
 }
 
@@ -1708,7 +1734,7 @@ export default function App() {
       {/* ── Positioning ── */}
       <section style={{ padding: "0 24px 96px", width: "100%" }}>
         <RevealSection>
-          <PositioningGraph />
+          <PositioningMatrix />
         </RevealSection>
       </section>
 
