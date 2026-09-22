@@ -1,7 +1,8 @@
 import { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { createNoise3D } from "simplex-noise";
+import { buildBrainEdges } from "./brainGeometry";
+import ArButton from "./ArButton";
 
 /* ─── WireframeBrain ────────────────────────────────────── */
 /* A genuinely volumetric 3-D brain — an icosphere displaced by layered
@@ -36,39 +37,10 @@ function useIsMobile() {
   return mobile;
 }
 
-function buildBrainGeometry() {
-  const geo = new THREE.IcosahedronGeometry(1, 4);
-  const noise3D = createNoise3D();
-  const pos = geo.attributes.position;
-  const v = new THREE.Vector3();
-  const dir = new THREE.Vector3();
-  for (let i = 0; i < pos.count; i++) {
-    v.fromBufferAttribute(pos, i);
-    dir.copy(v).normalize();
-    // abs(dir.x) mirrors the noise sample across the x=0 fissure plane, so
-    // both hemispheres get identical fold patterns — without this, raw
-    // noise gives each side unrelated bumps and the mesh's visual mass
-    // skews off-axis even though the fissure is geometrically centered.
-    const n1 = noise3D(Math.abs(dir.x) * 2.2, dir.y * 2.2, dir.z * 2.2);
-    const n2 = noise3D(Math.abs(dir.x) * 5.2 + 9, dir.y * 5.2 + 9, dir.z * 5.2 + 9);
-    const fold = n1 * 0.09 + n2 * 0.045;
-    const fissure = Math.exp(-((dir.x / 0.1) ** 2)) * 0.24 * Math.max(dir.y * 0.5 + 0.5, 0);
-    const flattenBase = dir.y < -0.25 ? (dir.y + 0.25) * 0.35 : 0;
-    const r = 1 + fold - fissure + flattenBase;
-    v.copy(dir).multiplyScalar(r);
-    pos.setXYZ(i, v.x, v.y, v.z);
-  }
-  pos.needsUpdate = true;
-  geo.computeVertexNormals();
-  geo.scale(1, 0.86, 1.15);
-  return geo;
-}
-
 function BrainMesh({ pointerRef, open }: { pointerRef: React.MutableRefObject<PointerState>; open: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
   const idleAngle = useRef(0);
-  const brainGeometry = useMemo(buildBrainGeometry, []);
-  const brainEdges = useMemo(() => new THREE.EdgesGeometry(brainGeometry, 12), [brainGeometry]);
+  const brainEdges = useMemo(buildBrainEdges, []);
 
   useFrame((_, delta) => {
     const p = pointerRef.current;
@@ -335,7 +307,7 @@ export default function WireframeBrain() {
   );
 
   return (
-    <div style={{ width: "100%", maxWidth: open && !isMobile ? "900px" : "460px", margin: "12px auto 0", transition: "max-width 0.5s var(--ease-response)" }}>
+    <div id="how-i-think" style={{ width: "100%", maxWidth: open && !isMobile ? "900px" : "460px", margin: "12px auto 0", scrollMarginTop: "80px", transition: "max-width 0.5s var(--ease-response)" }}>
       {isMobile ? (
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           {brainCanvas}
@@ -402,6 +374,8 @@ export default function WireframeBrain() {
       }}>
         {open ? "click brain to close · click a card to go deeper" : "click to explore"}
       </p>
+
+      <ArButton />
     </div>
   );
 }
