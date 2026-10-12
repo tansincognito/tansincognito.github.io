@@ -35,13 +35,13 @@
   }
 }
 
-/* Projects: 2 columns x 3 rows */
+/* Projects: single-column rows (icon left, description right) */
 .project-grid {
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
 }
 @media (max-width: 420px) {
   .project-grid {
-    gap: 10px !important;
+    gap: 24px !important;
   }
 }
 

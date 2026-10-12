@@ -7,9 +7,6 @@ import {
   ArrowUpRight,
   Laptop,
   Briefcase,
-  Zap,
-  BarChart2,
-  Layers,
   Cog,
   Puzzle,
 } from "lucide-react";
@@ -41,7 +38,7 @@ const projects: Project[] = [
     id: "python-project",
     name: "Integrelli",           // TODO: replace with project name
     tagline: "Analyze any python repo",           // TODO: replace
-    description: "Developer tool to help understand , design and debug third party integrations.", // TODO: replace
+    description: "Building a [repo analyzer] to solve [opaque third-party integrations], enabling [faster understanding, design and debugging].",
     stack: ["Next.js", "TypeScript", "Tailwind", "Zustand", "Zod"],
     gradient: { from: "#4facfe", to: "#ffd32a" },
     Icon: Puzzle,
@@ -53,7 +50,7 @@ const projects: Project[] = [
     id: "briefcase-project",
     name: "TripSync",        // TODO: replace with project name
     tagline: "Plan in minutes instead of weeks/months",           // TODO: replace
-    description: "A web app to enable trip planning easier for groups and individuals", // TODO: replace
+    description: "Building a [group trip-planning web app] to solve [slow, scattered coordination], enabling [plans in minutes instead of weeks].",
     stack: ["React", "Vite", "Tailwind", "Supabase"],
     gradient: { from: "#11998e", to: "#38ef7d" },
     Icon: Briefcase,
@@ -66,7 +63,7 @@ const projects: Project[] = [
     name: "Inside the Machine",
     tagline: "Visualise laptop behind-the-scenes",
     description:
-      "3-D visualisation of laptops dissembler to understand workflows between hardware triggered by processes.",
+      "Building a [3-D laptop teardown visualiser] to solve [hidden hardware-process interactions], enabling [an intuitive view of internal workflows].",
     stack: ["React", "Next.js", "Vercel" , "vibe coded"],
     gradient: { from: "#f953c6", to: "#b91d73" },
     Icon: Laptop,
@@ -74,9 +71,6 @@ const projects: Project[] = [
     live: "https://inside-the-machine.vercel.app/",     // TODO: replace
     active: true,
   },
-  { id: "p4", name: "Coming Soon", tagline: "", description: "", stack: [], gradient: { from: "#43e97b", to: "#38f9d7" }, Icon: Zap,      github: "#", live: "#", active: false },
-  { id: "p5", name: "Coming Soon", tagline: "", description: "", stack: [], gradient: { from: "#667eea", to: "#764ba2" }, Icon: BarChart2, github: "#", live: "#", active: false },
-  { id: "p6", name: "Coming Soon", tagline: "", description: "", stack: [], gradient: { from: "#f093fb", to: "#f5576c" }, Icon: Layers,   github: "#", live: "#", active: false },
 ];
 
 const socials = [
@@ -475,41 +469,22 @@ function TracedIcon({ Icon, size, hovered }: { Icon: IconComponent; size: number
 function ProjectCard({ project, index }: { project: Project; index: number }) {
   const [hovered, setHovered] = useState(false);
   const { ref, visible } = useReveal();
-  const isMobile = useIsMobile();
   const ProjectIcon = project.Icon;
 
   return (
     <div
       ref={ref}
       style={{
-        opacity: visible ? (project.active ? 1 : 0.35) : 0,
+        opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(28px)",
         transition: `opacity var(--dur-base) var(--ease-reveal) ${80 + index * 55}ms, transform var(--dur-base) var(--ease-reveal) ${80 + index * 55}ms`,
         position: "relative",
-        // Each card is its own stacking context (the transform above forces
-        // that), so the mobile popup's z-index only ever wins against ITS
-        // OWN siblings — not against the card in the grid row below, which
-        // sits later in DOM order and would otherwise paint (and intercept
-        // taps) on top of an open popup. Promoting the whole card's z-index
-        // while its popup is open lifts it above every other grid item.
-        zIndex: hovered ? 5 : 0,
-        filter: project.active ? "none" : "saturate(0.3)",
       }}
-      onMouseEnter={() => { if (project.active && !isMobile) setHovered(true); }}
+      onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onClick={() => { if (project.active && isMobile) setHovered((v) => !v); }}
     >
-      {/* Tile */}
-      <div style={{
-        borderRadius: 20,
-        padding: "12px 6px 9px",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 12,
-      }}>
-        {/* Icon anchor — stays fixed size/position so the popup gap never moves */}
-        <div style={{ width: 82, height: 82, position: "relative", flexShrink: 0 }}>
+      <div style={{ borderRadius: 20, padding: "12px 6px 9px", display: "flex", alignItems: "center", gap: 16 }}>
+        <div style={{ width: 64, height: 64, position: "relative", flexShrink: 0 }}>
           <div style={{
             width: "100%",
             height: "100%",
@@ -522,69 +497,30 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             <ProjectIcon size={46} color={`url(#icon-grad-${project.id})`} strokeWidth={1.8} />
             <TracedIcon Icon={ProjectIcon} size={46} hovered={hovered} />
           </div>
-
-          {/* Popup — slides out from the icon's right edge on desktop hover;
-              drops below the icon on mobile tap, since a right-edge popup
-              would overflow the viewport from the grid's right column. */}
-          {project.active && (
-            <div style={isMobile ? {
-              position: "absolute",
-              top: "calc(100% + 8px)",
-              left: "50%",
-              zIndex: 50,
-              width: "min(210px, 78vw)",
-              transform: hovered ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(-10px)",
-              opacity: hovered ? 1 : 0,
-              pointerEvents: hovered ? "auto" : "none",
-              transition: "opacity var(--dur-base) var(--ease-response), transform var(--dur-base) var(--ease-reveal)",
-              background: "rgba(255,255,255,0.92)",
-              backdropFilter: "blur(28px)",
-              WebkitBackdropFilter: "blur(28px)",
-              border: "1px solid rgba(255,255,255,0.6)",
-              borderRadius: 20,
-              overflow: "hidden",
-              boxShadow: "0 12px 48px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.95)",
-            } : {
-              position: "absolute",
-              top: "50%",
-              left: "calc(100% + 4px)",
-              zIndex: 50,
-              width: 210,
-              transform: hovered ? "translateY(-50%) translateX(0)" : "translateY(-50%) translateX(-14px)",
-              opacity: hovered ? 1 : 0,
-              pointerEvents: hovered ? "auto" : "none",
-              transition: "opacity var(--dur-base) var(--ease-response), transform var(--dur-base) var(--ease-reveal)",
-              background: "rgba(255,255,255,0.92)",
-              backdropFilter: "blur(28px)",
-              WebkitBackdropFilter: "blur(28px)",
-              border: "1px solid rgba(255,255,255,0.6)",
-              borderRadius: 20,
-              overflow: "hidden",
-              boxShadow: "0 12px 48px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.95)",
-            }}>
-              {/* Content */}
-              <div style={{ padding: "7px 8px 7px" }}>
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", color: "#555", lineHeight: 1.65, marginBottom: 12 }}>{project.description}</p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 14 }}>
-                  {project.stack.map((t) => (
-                    <span key={t} style={{ fontFamily: "'DM Mono', monospace", fontSize: "10px", color: project.gradient.from, background: `${project.gradient.from}1c`, padding: "2px 8px", borderRadius: 999, fontWeight: 500 }}>{t}</span>
-                  ))}
-                </div>
-                <div style={{ display: "flex", gap: 14 }}>
-                  <a href={project.github} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "Inter, sans-serif", fontSize: "11px", color: "#222", fontWeight: 500 }}>
-                    <Github size={12} strokeWidth={2} /> GitHub
-                  </a>
-                  <a href={project.live} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "Inter, sans-serif", fontSize: "11px", color: project.gradient.from, fontWeight: 600 }}>
-                    <ArrowUpRight size={12} strokeWidth={2} /> Live
-                  </a>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
-        <span style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", fontWeight: 600, color: project.active ? "#222" : "#bbb", textAlign: "center", lineHeight: 1.3 }}>
-          {project.name}
-        </span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0, textAlign: "left" }}>
+          <div style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", columnGap: 28, rowGap: 4 }}>
+            <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(20px, 2.2vw, 26px)", fontWeight: 700, color: "#111", lineHeight: 1.15 }}>
+              {project.name}
+            </span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "11px", fontWeight: 500, color: project.gradient.from, letterSpacing: "0.02em" }}>
+              {project.stack.join(" · ")}
+            </span>
+            <span style={{ display: "inline-flex", gap: 10, alignSelf: "center" }}>
+              <a href={project.github} title="GitHub" target="_blank" rel="noopener noreferrer" style={{ display: "flex", color: "#222" }}>
+                <Github size={14} strokeWidth={2} />
+              </a>
+              <a href={project.live} title="Live" target="_blank" rel="noopener noreferrer" style={{ display: "flex", color: project.gradient.from }}>
+                <ArrowUpRight size={14} strokeWidth={2} />
+              </a>
+            </span>
+          </div>
+          <p style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(14px, 1.75vw, 16px)", fontWeight: 400, color: "#666", lineHeight: 1.6, margin: 0 }}>
+            {project.description.split(/\[([^\]]+)\]/).map((part, i) =>
+              i % 2 === 1 ? <strong key={i} style={{ fontWeight: 400, color: "#111" }}>{part}</strong> : part
+            )}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -1273,7 +1209,7 @@ const POSITIONING_QUADRANTS: { align: "start" | "end"; items: { label: string; t
   },
 ];
 
-const POSITIONING_AXIS_LABEL_STYLE = { fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: "13px", letterSpacing: "0.08em", fill: "#999" } as const;
+const POSITIONING_AXIS_LABEL_STYLE = { fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: "13px", letterSpacing: "0.08em", fill: "#111" } as const;
 const POSITIONING_POINT_LABEL_STYLE = { fontFamily: "'DM Mono', monospace", fontSize: "12px", fill: "#444" } as const;
 
 function PositioningGraph() {
@@ -1683,7 +1619,7 @@ export default function App() {
                 What I've Built
               </p>
             </RevealSection>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "32px" }}
               className="project-grid">
               {projects.map((p, i) => (
                 <ProjectCard key={p.id} project={p} index={i} />
