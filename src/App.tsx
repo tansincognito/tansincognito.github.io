@@ -91,19 +91,6 @@ const projects: Project[] = [
     live: "#",
     active: true,
   },
-  {
-    id: "graveyard-2",
-    name: "Shelved Idea Two",
-    tagline: "Parked for now",
-    description: "Short note on idea",
-    category: "graveyard",
-    stack: ["TBD"],
-    gradient: { from: "#9aa0a6", to: "#5f6368" },
-    Icon: Ghost,
-    github: "#",
-    live: "#",
-    active: true,
-  },
 ];
 
 const PROJECT_GROUPS: { category: ProjectCategory; label: string }[] = [
@@ -114,9 +101,7 @@ const PROJECT_GROUPS: { category: ProjectCategory; label: string }[] = [
 
 // TODO: replace with real articles
 const writings = [
-  { title: "Article title one", href: "#" },
-  { title: "Article title two", href: "#" },
-  { title: "Article title three", href: "#" },
+  { title: "Article title", href: "#" },
 ];
 
 const socials = [
@@ -512,17 +497,43 @@ function TracedIcon({ Icon, size, hovered }: { Icon: IconComponent; size: number
 
 /* ─── ProjectCard ───────────────────────────────────────── */
 
-function ProjectCard({ project }: { project: Project }) {
+function ProjectCard({ project, side }: { project: Project; side: "left" | "right" }) {
   const [hovered, setHovered] = useState(false);
   const ProjectIcon = project.Icon;
+
+  // Right-aligned rows rest against the right edge and slide left as the
+  // details open up on the icon's right; left-aligned rows mirror that,
+  // sliding right as the details open up on the icon's left.
+  const details = (
+    <div
+      style={{
+        maxWidth: hovered ? 360 : 0,
+        opacity: hovered ? 1 : 0,
+        overflow: "hidden",
+        flexShrink: 1,
+        transition: "max-width 0.5s var(--ease-reveal), opacity 0.4s var(--ease-reveal)",
+      }}
+    >
+      <div style={{ width: 340, maxWidth: "100%", textAlign: "left", ...(side === "left" ? { paddingRight: 8 } : { paddingLeft: 8 }) }}>
+        <p style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(14px, 1.75vw, 16px)", color: "#666", lineHeight: 1.5, margin: 0 }}>
+          {project.description}
+        </p>
+        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "11px", fontWeight: 500, color: project.gradient.from, letterSpacing: "0.02em", margin: "6px 0 0" }}>
+          {project.stack.join(" · ")}
+        </p>
+      </div>
+    </div>
+  );
 
   return (
     <div
       style={{ position: "relative" }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={() => setHovered((v) => !v)}
     >
-      <div style={{ borderRadius: 20, padding: "12px 6px 9px", display: "flex", alignItems: "center", gap: 16 }}>
+      <div style={{ borderRadius: 20, padding: "12px 6px 9px", display: "flex", alignItems: "center", gap: 16, justifyContent: side === "right" ? "flex-end" : "flex-start" }}>
+        {side === "left" && details}
         <div style={{ width: 64, height: 64, position: "relative", flexShrink: 0 }}>
           <div style={{
             width: "100%",
@@ -537,24 +548,20 @@ function ProjectCard({ project }: { project: Project }) {
             <TracedIcon Icon={ProjectIcon} size={46} hovered={hovered} />
           </div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0, textAlign: "left" }}>
-          <div style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", columnGap: 28, rowGap: 4 }}>
-            <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(20px, 2.2vw, 26px)", fontWeight: 600, color: "#111", lineHeight: 1.15 }}>
-              {project.name}
-            </span>
-            <span style={{ display: "inline-flex", gap: 10, alignSelf: "center" }}>
-              <a href={project.github} title="GitHub" target="_blank" rel="noopener noreferrer" style={{ display: "flex", color: "#222" }}>
-                <Github size={14} strokeWidth={2} />
-              </a>
-              <a href={project.live} title="Live" target="_blank" rel="noopener noreferrer" style={{ display: "flex", color: project.gradient.from }}>
-                <ArrowUpRight size={14} strokeWidth={2} />
-              </a>
-            </span>
-          </div>
-          <p style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(14px, 1.75vw, 16px)", fontWeight: 400, color: "#666", lineHeight: 1.6, margin: 0 }}>
-            {project.description}
-          </p>
+        <div style={{ display: "flex", alignItems: "baseline", columnGap: 14, rowGap: 4, flexWrap: "wrap", flexShrink: 0 }}>
+          <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(20px, 2.2vw, 26px)", fontWeight: 600, color: "#111", lineHeight: 1.15 }}>
+            {project.name}
+          </span>
+          <span style={{ display: "inline-flex", gap: 10, alignSelf: "center" }}>
+            <a href={project.github} title="GitHub" target="_blank" rel="noopener noreferrer" style={{ display: "flex", color: "#222" }}>
+              <Github size={14} strokeWidth={2} />
+            </a>
+            <a href={project.live} title="Live" target="_blank" rel="noopener noreferrer" style={{ display: "flex", color: project.gradient.from }}>
+              <ArrowUpRight size={14} strokeWidth={2} />
+            </a>
+          </span>
         </div>
+        {side === "right" && details}
       </div>
     </div>
   );
@@ -1590,10 +1597,10 @@ export default function App() {
         .scan-reset-btn:active { transform: scale(0.94); }
         .writing-title {
           display: inline-block;
-          transition: transform var(--dur-base) var(--ease-response), letter-spacing var(--dur-base) var(--ease-response);
+          transition: transform var(--dur-base) var(--ease-response), letter-spacing var(--dur-base) var(--ease-response), color var(--dur-base) var(--ease-response);
         }
         .writing-arrow { transition: transform var(--dur-base) var(--ease-response); }
-        .writing-link:hover .writing-title { transform: translateX(8px); letter-spacing: 0.01em; }
+        .writing-link:hover .writing-title { transform: translateX(8px); color: #555; }
         .writing-link:hover .writing-arrow { transform: translate(4px, -4px); }
       `}</style>
 
@@ -1723,12 +1730,12 @@ export default function App() {
             <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               {PROJECT_GROUPS.map((g, gi) => (
                 <RevealSection key={g.category} delay={80 + gi * 70}>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "11px", fontWeight: 500, color: "#888", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px" }}>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "16px", fontWeight: 500, color: "#888", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px", textAlign: gi % 2 === 0 ? "right" : "left" }}>
                     {g.label}
                   </p>
                   <AutoScrollList>
                     {projects.filter((p) => p.active && p.category === g.category).map((p) => (
-                      <ProjectCard key={p.id} project={p} />
+                      <ProjectCard key={p.id} project={p} side={gi % 2 === 0 ? "right" : "left"} />
                     ))}
                   </AutoScrollList>
                 </RevealSection>
@@ -1902,7 +1909,7 @@ export default function App() {
         </RevealSection>
         <div style={{ marginTop: "72px", ...(isMobile ? { display: "flex", flexDirection: "column", gap: "24px" } : { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "56px", alignItems: "start" }) }}>
           <RevealSection>
-            <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase" }}>
+            <p style={{ fontFamily: "'Libre Baskerville', serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: "#E8437E", lineHeight: 1.2 }}>
               My Writings
             </p>
           </RevealSection>
@@ -1924,7 +1931,7 @@ export default function App() {
                     textDecoration: "none",
                   }}
                 >
-                  <span className="writing-title" style={{ fontFamily: "'Libre Baskerville', serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: "#E8437E", lineHeight: 1.2 }}>
+                  <span className="writing-title" style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase" }}>
                     {w.title}
                   </span>
                   <ArrowUpRight className="writing-arrow" size={18} strokeWidth={2} color="#555" style={{ flexShrink: 0 }} />
