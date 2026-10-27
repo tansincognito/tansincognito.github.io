@@ -581,7 +581,7 @@ function ProjectCard({ project }: { project: Project }) {
             transition: "transform 0.6s var(--ease-reveal)",
           }}
         >
-          <div style={{ width: 68, height: 68, position: "relative", flexShrink: 0 }}>
+          <div style={{ width: 64.6, height: 64.6, position: "relative", flexShrink: 0 }}>
             <div style={{
               width: "100%",
               height: "100%",
@@ -591,12 +591,12 @@ function ProjectCard({ project }: { project: Project }) {
               transform: hovered ? "scale(1.1)" : "scale(1)",
               transition: "transform 0.4s cubic-bezier(.34,1.56,.64,1)",
             }}>
-              <ProjectIcon size={49} color={`url(#icon-grad-${project.id})`} strokeWidth={1.8} />
-              <TracedIcon Icon={ProjectIcon} size={49} hovered={hovered} />
+              <ProjectIcon size={46.5} color={`url(#icon-grad-${project.id})`} strokeWidth={1.8} />
+              <TracedIcon Icon={ProjectIcon} size={46.5} hovered={hovered} />
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "baseline", columnGap: 14, rowGap: 4, flexWrap: "wrap" }}>
-            <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(23px, 2.5vw, 29px)", fontWeight: 600, color: "#111", lineHeight: 1.15 }}>
+            <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(21.85px, 2.375vw, 27.55px)", fontWeight: 600, color: "#111", lineHeight: 1.15 }}>
               {project.name}
             </span>
             <span style={{ display: "inline-flex", gap: 10, alignSelf: "center" }}>
