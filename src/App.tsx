@@ -534,7 +534,7 @@ function ProjectCard({ project, side }: { project: Project; side: "left" | "righ
     >
       <div style={{ borderRadius: 20, padding: "12px 6px 9px", display: "flex", alignItems: "center", gap: 16, justifyContent: side === "right" ? "flex-end" : "flex-start" }}>
         {side === "left" && details}
-        <div style={{ width: 64, height: 64, position: "relative", flexShrink: 0 }}>
+        <div style={{ width: 68, height: 68, position: "relative", flexShrink: 0 }}>
           <div style={{
             width: "100%",
             height: "100%",
@@ -544,12 +544,12 @@ function ProjectCard({ project, side }: { project: Project; side: "left" | "righ
             transform: hovered ? "scale(1.1)" : "scale(1)",
             transition: "transform 0.4s cubic-bezier(.34,1.56,.64,1)",
           }}>
-            <ProjectIcon size={46} color={`url(#icon-grad-${project.id})`} strokeWidth={1.8} />
-            <TracedIcon Icon={ProjectIcon} size={46} hovered={hovered} />
+            <ProjectIcon size={49} color={`url(#icon-grad-${project.id})`} strokeWidth={1.8} />
+            <TracedIcon Icon={ProjectIcon} size={49} hovered={hovered} />
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "baseline", columnGap: 14, rowGap: 4, flexWrap: "wrap", flexShrink: 0 }}>
-          <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(20px, 2.2vw, 26px)", fontWeight: 600, color: "#111", lineHeight: 1.15 }}>
+          <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(23px, 2.5vw, 29px)", fontWeight: 600, color: "#111", lineHeight: 1.15 }}>
             {project.name}
           </span>
           <span style={{ display: "inline-flex", gap: 10, alignSelf: "center" }}>
@@ -567,55 +567,38 @@ function ProjectCard({ project, side }: { project: Project; side: "left" | "righ
   );
 }
 
-/* ─── AutoScrollList ────────────────────────────────────── */
-/* Fixed-height container that drifts upward on its own, looping
-   seamlessly by rendering its children twice. Pauses on hover/touch so it
-   stays manually scrollable; skipped entirely under reduced motion. */
+/* ─── ScribbleText ──────────────────────────────────────── */
+/* Hand-drawn scribble loop around a phrase that draws itself in once the
+   phrase scrolls into view, and redraws whenever it's hovered. */
 
-function AutoScrollList({ children, height = 190 }: { children: React.ReactNode; height?: number }) {
-  const boxRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const pausedRef = useRef(false);
-  const [loops, setLoops] = useState(false);
-
-  useEffect(() => {
-    const content = contentRef.current;
-    if (!content) return;
-    setLoops(content.offsetHeight > height);
-  }, [children, height]);
-
-  useEffect(() => {
-    const box = boxRef.current;
-    if (!loops || !box || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let raf = 0;
-    let pos = box.scrollTop;
-    const tick = () => {
-      if (!pausedRef.current) {
-        pos += 0.35;
-        const half = box.scrollHeight / 2;
-        if (pos >= half) pos -= half;
-        box.scrollTop = pos;
-      } else {
-        pos = box.scrollTop;
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [loops]);
-
+function ScribbleText({ children }: { children: React.ReactNode }) {
+  const { ref, visible } = useReveal();
+  const [drawKey, setDrawKey] = useState(0);
   return (
-    <div
-      ref={boxRef}
-      className="auto-scroll"
-      onMouseEnter={() => { pausedRef.current = true; }}
-      onMouseLeave={() => { pausedRef.current = false; }}
-      onTouchStart={() => { pausedRef.current = true; }}
-      onTouchEnd={() => { pausedRef.current = false; }}
-      style={{ height, overflowY: "auto", scrollbarWidth: "none" }}
-    >
-      <div ref={contentRef}>{children}</div>
-      {loops && <div aria-hidden="true">{children}</div>}
+    <div ref={ref} style={{ display: "inline-block" }} onMouseEnter={() => setDrawKey((k) => k + 1)}>
+      <span style={{ position: "relative", display: "inline-block", padding: "14px 26px" }}>
+        <svg
+          key={drawKey}
+          viewBox="0 0 300 80"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible", pointerEvents: "none" }}
+        >
+          <path
+            className={visible ? "scribble-path" : undefined}
+            d="M30 52 C8 30, 70 6, 160 8 S 296 22, 284 48 S 190 76, 108 72 S 2 62, 20 34 C 38 10, 140 2, 240 14 M24 74 C 90 66, 180 80, 276 68"
+            fill="none"
+            stroke="#E8437E"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            pathLength={100}
+            vectorEffect="non-scaling-stroke"
+            style={{ strokeDasharray: 100, strokeDashoffset: visible ? undefined : 100 }}
+          />
+        </svg>
+        {children}
+      </span>
     </div>
   );
 }
@@ -1595,6 +1578,11 @@ export default function App() {
         }
         .scan-reset-btn:hover { color: #111; }
         .scan-reset-btn:active { transform: scale(0.94); }
+        @keyframes scribble-draw {
+          from { stroke-dashoffset: 100; }
+          to   { stroke-dashoffset: 0; }
+        }
+        .scribble-path { animation: scribble-draw 1.4s var(--ease-reveal) forwards; }
         .writing-title {
           display: inline-block;
           transition: transform var(--dur-base) var(--ease-response), letter-spacing var(--dur-base) var(--ease-response), color var(--dur-base) var(--ease-response);
@@ -1733,11 +1721,9 @@ export default function App() {
                   <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "16px", fontWeight: 500, color: "#888", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px", textAlign: gi % 2 === 0 ? "right" : "left" }}>
                     {g.label}
                   </p>
-                  <AutoScrollList>
-                    {projects.filter((p) => p.active && p.category === g.category).map((p) => (
-                      <ProjectCard key={p.id} project={p} side={gi % 2 === 0 ? "right" : "left"} />
-                    ))}
-                  </AutoScrollList>
+                  {projects.filter((p) => p.active && p.category === g.category).map((p) => (
+                    <ProjectCard key={p.id} project={p} side={gi % 2 === 0 ? "right" : "left"} />
+                  ))}
                 </RevealSection>
               ))}
             </div>
@@ -1907,12 +1893,14 @@ export default function App() {
             <WireframeBrain />
           </Suspense>
         </RevealSection>
-        <div style={{ marginTop: "72px", ...(isMobile ? { display: "flex", flexDirection: "column", gap: "24px" } : { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "56px", alignItems: "start" }) }}>
-          <RevealSection>
-            <p style={{ fontFamily: "'Libre Baskerville', serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: "#E8437E", lineHeight: 1.2 }}>
-              My Writings
-            </p>
-          </RevealSection>
+        <div style={{ marginTop: "72px", ...(isMobile ? { display: "flex", flexDirection: "column", gap: "24px" } : { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "56px", alignItems: "stretch" }) }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <ScribbleText>
+              <span style={{ fontFamily: "'Libre Baskerville', serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: "#E8437E", lineHeight: 1.2 }}>
+                My Writings
+              </span>
+            </ScribbleText>
+          </div>
           <div>
             {writings.map((w, i) => (
               <RevealSection key={w.title} delay={60 + i * 60}>

@@ -62,6 +62,3 @@
     padding-right: 80px !important;
   }
 }
-
-/* Auto-scrolling project lists: hide scrollbar */
-.auto-scroll::-webkit-scrollbar { display: none; }
