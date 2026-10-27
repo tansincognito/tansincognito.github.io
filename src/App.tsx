@@ -517,7 +517,7 @@ function ProjectCard({ project, side }: { project: Project; side: "left" | "righ
         transition: "max-width 0.5s var(--ease-reveal), opacity 0.4s var(--ease-reveal), margin 0.5s var(--ease-reveal)",
       }}
     >
-      <div style={{ width: 340, maxWidth: "100%", textAlign: "left", ...(side === "left" ? { paddingRight: 8 } : { paddingLeft: 8 }) }}>
+      <div style={{ width: 340, textAlign: "left", ...(side === "left" ? { paddingRight: 8 } : { paddingLeft: 8 }) }}>
         <p style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(14px, 1.75vw, 16px)", color: "#666", lineHeight: 1.5, margin: 0 }}>
           {project.description}
         </p>
