@@ -2,7 +2,6 @@ import { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { buildBrainEdges } from "./brainGeometry";
-import ArButton from "./ArButton";
 
 /* ─── WireframeBrain ────────────────────────────────────── */
 /* A genuinely volumetric 3-D brain — an icosphere displaced by layered
@@ -375,7 +374,6 @@ export default function WireframeBrain() {
         {open ? "click brain to close · click a card to go deeper" : "click to explore"}
       </p>
 
-      <ArButton />
     </div>
   );
 }

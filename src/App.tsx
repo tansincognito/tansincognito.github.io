@@ -9,6 +9,7 @@ import {
   Briefcase,
   Cog,
   Puzzle,
+  Ghost,
 } from "lucide-react";
 
 const WireframeBrain = lazy(() => import("./WireframeBrain"));
@@ -18,11 +19,14 @@ const WireframeBrain = lazy(() => import("./WireframeBrain"));
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type IconComponent = React.ComponentType<any>;
 
+type ProjectCategory = "problems" | "fun" | "graveyard";
+
 interface Project {
   id: string;
   name: string;
   tagline: string;
-  description: string;
+  description: string; // 3-5 words
+  category: ProjectCategory;
   stack: string[];
   gradient: { from: string; to: string };
   Icon: IconComponent;
@@ -38,7 +42,8 @@ const projects: Project[] = [
     id: "python-project",
     name: "Integrelli",           // TODO: replace with project name
     tagline: "Analyze any python repo",           // TODO: replace
-    description: "Building a [repo analyzer] to solve [opaque third-party integrations], enabling [faster understanding, design and debugging].",
+    description: "Python repo analyzer",
+    category: "problems",
     stack: ["Next.js", "TypeScript", "Tailwind", "Zustand", "Zod"],
     gradient: { from: "#4facfe", to: "#ffd32a" },
     Icon: Puzzle,
@@ -50,7 +55,8 @@ const projects: Project[] = [
     id: "briefcase-project",
     name: "TripSync",        // TODO: replace with project name
     tagline: "Plan in minutes instead of weeks/months",           // TODO: replace
-    description: "Building a [group trip-planning web app] to solve [slow, scattered coordination], enabling [plans in minutes instead of weeks].",
+    description: "Group trip planning",
+    category: "problems",
     stack: ["React", "Vite", "Tailwind", "Supabase"],
     gradient: { from: "#11998e", to: "#38ef7d" },
     Icon: Briefcase,
@@ -62,8 +68,8 @@ const projects: Project[] = [
     id: "inside-the-machine",
     name: "Inside the Machine",
     tagline: "Visualise laptop behind-the-scenes",
-    description:
-      "Building a [3-D laptop teardown visualiser] to solve [hidden hardware-process interactions], enabling [an intuitive view of internal workflows].",
+    description: "3-D laptop teardown visualiser",
+    category: "fun",
     stack: ["React", "Next.js", "Vercel" , "vibe coded"],
     gradient: { from: "#f953c6", to: "#b91d73" },
     Icon: Laptop,
@@ -71,6 +77,46 @@ const projects: Project[] = [
     live: "https://inside-the-machine.vercel.app/",     // TODO: replace
     active: true,
   },
+  // TODO: replace graveyard placeholders with real shelved ideas
+  {
+    id: "graveyard-1",
+    name: "Shelved Idea One",
+    tagline: "Parked for now",
+    description: "Short note on idea",
+    category: "graveyard",
+    stack: ["TBD"],
+    gradient: { from: "#9aa0a6", to: "#5f6368" },
+    Icon: Ghost,
+    github: "#",
+    live: "#",
+    active: true,
+  },
+  {
+    id: "graveyard-2",
+    name: "Shelved Idea Two",
+    tagline: "Parked for now",
+    description: "Short note on idea",
+    category: "graveyard",
+    stack: ["TBD"],
+    gradient: { from: "#9aa0a6", to: "#5f6368" },
+    Icon: Ghost,
+    github: "#",
+    live: "#",
+    active: true,
+  },
+];
+
+const PROJECT_GROUPS: { category: ProjectCategory; label: string }[] = [
+  { category: "problems", label: "Solving problems" },
+  { category: "fun", label: "For fun" },
+  { category: "graveyard", label: "Graveyard ideas" },
+];
+
+// TODO: replace with real articles
+const writings = [
+  { title: "Article title one", href: "#" },
+  { title: "Article title two", href: "#" },
+  { title: "Article title three", href: "#" },
 ];
 
 const socials = [
@@ -466,20 +512,13 @@ function TracedIcon({ Icon, size, hovered }: { Icon: IconComponent; size: number
 
 /* ─── ProjectCard ───────────────────────────────────────── */
 
-function ProjectCard({ project, index }: { project: Project; index: number }) {
+function ProjectCard({ project }: { project: Project }) {
   const [hovered, setHovered] = useState(false);
-  const { ref, visible } = useReveal();
   const ProjectIcon = project.Icon;
 
   return (
     <div
-      ref={ref}
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(28px)",
-        transition: `opacity var(--dur-base) var(--ease-reveal) ${80 + index * 55}ms, transform var(--dur-base) var(--ease-reveal) ${80 + index * 55}ms`,
-        position: "relative",
-      }}
+      style={{ position: "relative" }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -516,12 +555,55 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             </span>
           </div>
           <p style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(14px, 1.75vw, 16px)", fontWeight: 400, color: "#666", lineHeight: 1.6, margin: 0 }}>
-            {project.description.split(/\[([^\]]+)\]/).map((part, i) =>
-              i % 2 === 1 ? <strong key={i} style={{ fontWeight: 400, color: "#111" }}>{part}</strong> : part
-            )}
+            {project.description}
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ─── AutoScrollList ────────────────────────────────────── */
+/* Fixed-height container that drifts upward on its own, looping
+   seamlessly by rendering its children twice. Pauses on hover/touch so it
+   stays manually scrollable; skipped entirely under reduced motion. */
+
+function AutoScrollList({ children, height = 190 }: { children: React.ReactNode; height?: number }) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const pausedRef = useRef(false);
+
+  useEffect(() => {
+    const box = boxRef.current;
+    if (!box || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0;
+    let pos = box.scrollTop;
+    const tick = () => {
+      if (!pausedRef.current) {
+        pos += 0.35;
+        const half = box.scrollHeight / 2;
+        if (pos >= half) pos -= half;
+        box.scrollTop = pos;
+      } else {
+        pos = box.scrollTop;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  return (
+    <div
+      ref={boxRef}
+      className="auto-scroll"
+      onMouseEnter={() => { pausedRef.current = true; }}
+      onMouseLeave={() => { pausedRef.current = false; }}
+      onTouchStart={() => { pausedRef.current = true; }}
+      onTouchEnd={() => { pausedRef.current = false; }}
+      style={{ height, overflowY: "auto", scrollbarWidth: "none" }}
+    >
+      <div>{children}</div>
+      <div aria-hidden="true">{children}</div>
     </div>
   );
 }
@@ -1307,6 +1389,13 @@ function AgentModePage() {
         ))}
       </ul>
 
+      <h2 style={AGENT_SECTION_STYLE}>Writings</h2>
+      <ul style={AGENT_LIST_STYLE}>
+        {writings.map((w) => (
+          <li key={w.title}><a href={w.href}>{w.title}</a></li>
+        ))}
+      </ul>
+
       <h2 style={AGENT_SECTION_STYLE}>Experience</h2>
       <ul style={AGENT_LIST_STYLE}>
         {resumeData.experience.map((e) => (
@@ -1615,14 +1704,22 @@ export default function App() {
             }}
           >
             <RevealSection delay={40}>
-              <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "28px" }}>
+              <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "20px" }}>
                 What I've Built
               </p>
             </RevealSection>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "32px" }}
-              className="project-grid">
-              {projects.map((p, i) => (
-                <ProjectCard key={p.id} project={p} index={i} />
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              {PROJECT_GROUPS.map((g, gi) => (
+                <RevealSection key={g.category} delay={80 + gi * 70}>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "11px", fontWeight: 500, color: "#888", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px" }}>
+                    {g.label}
+                  </p>
+                  <AutoScrollList>
+                    {projects.filter((p) => p.active && p.category === g.category).map((p) => (
+                      <ProjectCard key={p.id} project={p} />
+                    ))}
+                  </AutoScrollList>
+                </RevealSection>
               ))}
             </div>
           </div>
@@ -1701,6 +1798,43 @@ export default function App() {
         <RevealSection>
           <PositioningGraph />
         </RevealSection>
+      </section>
+
+      {/* ── Writings ── */}
+      <section style={{ padding: "0 24px 96px", width: "100%" }}>
+        <div style={isMobile ? { display: "flex", flexDirection: "column", gap: "24px" } : { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "56px", alignItems: "start" }}>
+          <RevealSection>
+            <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase" }}>
+              My Writings
+            </p>
+          </RevealSection>
+          <div>
+            {writings.map((w, i) => (
+              <RevealSection key={w.title} delay={60 + i * 60}>
+                <a
+                  href={w.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "12px",
+                    padding: "16px 0",
+                    borderBottom: "1px solid #eee",
+                    textDecoration: "none",
+                    color: "#111",
+                  }}
+                >
+                  <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(18px, 2.2vw, 22px)", fontWeight: 600 }}>
+                    {w.title}
+                  </span>
+                  <ArrowUpRight size={16} strokeWidth={2} color="#555" style={{ flexShrink: 0 }} />
+                </a>
+              </RevealSection>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* ── About ── */}
