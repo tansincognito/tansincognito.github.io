@@ -511,7 +511,10 @@ function ProjectCard({ project, side }: { project: Project; side: "left" | "righ
         opacity: hovered ? 1 : 0,
         overflow: "hidden",
         flexShrink: 1,
-        transition: "max-width 0.5s var(--ease-reveal), opacity 0.4s var(--ease-reveal)",
+        // Negative margin cancels the row's 16px gap while collapsed, so
+        // the resting row has no phantom space beside the title.
+        [side === "left" ? "marginRight" : "marginLeft"]: hovered ? 0 : -16,
+        transition: "max-width 0.5s var(--ease-reveal), opacity 0.4s var(--ease-reveal), margin 0.5s var(--ease-reveal)",
       }}
     >
       <div style={{ width: 340, maxWidth: "100%", textAlign: "left", ...(side === "left" ? { paddingRight: 8 } : { paddingLeft: 8 }) }}>
@@ -589,7 +592,7 @@ function ScribbleText({ children }: { children: React.ReactNode }) {
             d="M30 52 C8 30, 70 6, 160 8 S 296 22, 284 48 S 190 76, 108 72 S 2 62, 20 34 C 38 10, 140 2, 240 14 M24 74 C 90 66, 180 80, 276 68"
             fill="none"
             stroke="#E8437E"
-            strokeWidth="2"
+            strokeWidth="4"
             strokeLinecap="round"
             strokeLinejoin="round"
             pathLength={100}
@@ -1582,7 +1585,7 @@ export default function App() {
           from { stroke-dashoffset: 100; }
           to   { stroke-dashoffset: 0; }
         }
-        .scribble-path { animation: scribble-draw 1.4s var(--ease-reveal) forwards; }
+        .scribble-path { animation: scribble-draw 2.8s var(--ease-reveal) forwards; }
         .writing-title {
           display: inline-block;
           transition: transform var(--dur-base) var(--ease-response), letter-spacing var(--dur-base) var(--ease-response), color var(--dur-base) var(--ease-response);
