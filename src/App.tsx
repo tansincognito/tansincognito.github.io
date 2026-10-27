@@ -539,11 +539,8 @@ function ProjectCard({ project }: { project: Project }) {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0, textAlign: "left" }}>
           <div style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", columnGap: 28, rowGap: 4 }}>
-            <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(20px, 2.2vw, 26px)", fontWeight: 700, color: "#111", lineHeight: 1.15 }}>
+            <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(20px, 2.2vw, 26px)", fontWeight: 600, color: "#111", lineHeight: 1.15 }}>
               {project.name}
-            </span>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "11px", fontWeight: 500, color: project.gradient.from, letterSpacing: "0.02em" }}>
-              {project.stack.join(" · ")}
             </span>
             <span style={{ display: "inline-flex", gap: 10, alignSelf: "center" }}>
               <a href={project.github} title="GitHub" target="_blank" rel="noopener noreferrer" style={{ display: "flex", color: "#222" }}>
@@ -570,11 +567,19 @@ function ProjectCard({ project }: { project: Project }) {
 
 function AutoScrollList({ children, height = 190 }: { children: React.ReactNode; height?: number }) {
   const boxRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(false);
+  const [loops, setLoops] = useState(false);
+
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    setLoops(content.offsetHeight > height);
+  }, [children, height]);
 
   useEffect(() => {
     const box = boxRef.current;
-    if (!box || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!loops || !box || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let raf = 0;
     let pos = box.scrollTop;
     const tick = () => {
@@ -590,7 +595,7 @@ function AutoScrollList({ children, height = 190 }: { children: React.ReactNode;
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [loops]);
 
   return (
     <div
@@ -602,8 +607,8 @@ function AutoScrollList({ children, height = 190 }: { children: React.ReactNode;
       onTouchEnd={() => { pausedRef.current = false; }}
       style={{ height, overflowY: "auto", scrollbarWidth: "none" }}
     >
-      <div>{children}</div>
-      <div aria-hidden="true">{children}</div>
+      <div ref={contentRef}>{children}</div>
+      {loops && <div aria-hidden="true">{children}</div>}
     </div>
   );
 }
@@ -1583,6 +1588,13 @@ export default function App() {
         }
         .scan-reset-btn:hover { color: #111; }
         .scan-reset-btn:active { transform: scale(0.94); }
+        .writing-title {
+          display: inline-block;
+          transition: transform var(--dur-base) var(--ease-response), letter-spacing var(--dur-base) var(--ease-response);
+        }
+        .writing-arrow { transition: transform var(--dur-base) var(--ease-response); }
+        .writing-link:hover .writing-title { transform: translateX(8px); letter-spacing: 0.01em; }
+        .writing-link:hover .writing-arrow { transform: translate(4px, -4px); }
       `}</style>
 
       {/* ── Nav ── */}
@@ -1800,43 +1812,6 @@ export default function App() {
         </RevealSection>
       </section>
 
-      {/* ── Writings ── */}
-      <section style={{ padding: "0 24px 96px", width: "100%" }}>
-        <div style={isMobile ? { display: "flex", flexDirection: "column", gap: "24px" } : { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "56px", alignItems: "start" }}>
-          <RevealSection>
-            <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase" }}>
-              My Writings
-            </p>
-          </RevealSection>
-          <div>
-            {writings.map((w, i) => (
-              <RevealSection key={w.title} delay={60 + i * 60}>
-                <a
-                  href={w.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "12px",
-                    padding: "16px 0",
-                    borderBottom: "1px solid #eee",
-                    textDecoration: "none",
-                    color: "#111",
-                  }}
-                >
-                  <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(18px, 2.2vw, 22px)", fontWeight: 600 }}>
-                    {w.title}
-                  </span>
-                  <ArrowUpRight size={16} strokeWidth={2} color="#555" style={{ flexShrink: 0 }} />
-                </a>
-              </RevealSection>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── About ── */}
       <section style={{ padding: "0 24px 96px", width: "100%" }}>
         {/* whoIAmRef sits on this untransformed row so its scroll progress
@@ -1925,6 +1900,39 @@ export default function App() {
             <WireframeBrain />
           </Suspense>
         </RevealSection>
+        <div style={{ marginTop: "72px", ...(isMobile ? { display: "flex", flexDirection: "column", gap: "24px" } : { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "56px", alignItems: "start" }) }}>
+          <RevealSection>
+            <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase" }}>
+              My Writings
+            </p>
+          </RevealSection>
+          <div>
+            {writings.map((w, i) => (
+              <RevealSection key={w.title} delay={60 + i * 60}>
+                <a
+                  href={w.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="writing-link"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "12px",
+                    padding: "16px 0",
+                    borderBottom: "1px solid #eee",
+                    textDecoration: "none",
+                  }}
+                >
+                  <span className="writing-title" style={{ fontFamily: "'Libre Baskerville', serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: "#E8437E", lineHeight: 1.2 }}>
+                    {w.title}
+                  </span>
+                  <ArrowUpRight className="writing-arrow" size={18} strokeWidth={2} color="#555" style={{ flexShrink: 0 }} />
+                </a>
+              </RevealSection>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* ── Closing line ── */}
