@@ -512,9 +512,27 @@ function ProjectCard({ project }: { project: Project }) {
   const compact = useIsNarrow(1280);
   const ProjectIcon = project.Icon;
 
-  // Wide screens: the row rests toward the right and slides left as the
-  // details open up on the title's right. Narrower screens don't have the
-  // room for that, so the details open below the title instead.
+  // The icon + title rest centred in the column and slide to its left edge
+  // (the page's halfway line) on hover. `restOffset` is the distance from
+  // that left edge to the centred position, measured so it stays correct
+  // as the column resizes.
+  const rowRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
+  const [restOffset, setRestOffset] = useState(0);
+  useLayoutEffect(() => {
+    const row = rowRef.current;
+    const main = mainRef.current;
+    if (!row || !main) return;
+    const measure = () => setRestOffset(Math.max(0, (row.clientWidth - 12 - main.offsetWidth) / 2));
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(row);
+    ro.observe(main);
+    return () => ro.disconnect();
+  }, []);
+
+  // Wide screens: the details open up on the title's right as it slides
+  // left. Narrower screens don't have the room, so they open below it.
   const details = (
     <div
       style={compact ? {
@@ -533,7 +551,7 @@ function ProjectCard({ project }: { project: Project }) {
         transition: "max-width 0.5s var(--ease-reveal), opacity 0.4s var(--ease-reveal), margin 0.5s var(--ease-reveal)",
       }}
     >
-      <div style={compact ? { width: 300, maxWidth: "100%", marginLeft: "auto", textAlign: "right", paddingTop: 2 } : { minWidth: 170, textAlign: "left", paddingLeft: 8 }}>
+      <div style={compact ? { width: 300, maxWidth: "100%", textAlign: "left", paddingTop: 2 } : { minWidth: 170, textAlign: "left", paddingLeft: 8 }}>
         <p style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(14px, 1.75vw, 16px)", color: "#666", lineHeight: 1.5, margin: 0 }}>
           {project.description}
         </p>
@@ -551,8 +569,18 @@ function ProjectCard({ project }: { project: Project }) {
       onMouseLeave={() => setHovered(false)}
       onClick={() => setHovered((v) => !v)}
     >
-      <div style={{ borderRadius: 20, padding: "12px 28px 9px 6px", display: "flex", flexDirection: compact ? "column" : "row", alignItems: compact ? "flex-end" : "center", gap: compact ? 4 : 16, justifyContent: "flex-end" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
+      <div ref={rowRef} style={{ borderRadius: 20, padding: "12px 6px 9px", display: "flex", flexDirection: compact ? "column" : "row", alignItems: compact ? "flex-start" : "center", gap: compact ? 4 : 16 }}>
+        <div
+          ref={mainRef}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+            flexShrink: 0,
+            transform: `translateX(${hovered ? 0 : restOffset}px)`,
+            transition: "transform 0.6s var(--ease-reveal)",
+          }}
+        >
           <div style={{ width: 68, height: 68, position: "relative", flexShrink: 0 }}>
             <div style={{
               width: "100%",
@@ -1738,7 +1766,7 @@ export default function App() {
             <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               {PROJECT_GROUPS.map((g, gi) => (
                 <RevealSection key={g.category} delay={80 + gi * 70}>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "16px", fontWeight: 500, color: "#888", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px", textAlign: "right" }}>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "16px", fontWeight: 500, color: "#888", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px", textAlign: "left" }}>
                     {g.label}
                   </p>
                   {projects.filter((p) => p.active && p.category === g.category).map((p) => (
