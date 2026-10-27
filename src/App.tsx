@@ -248,6 +248,16 @@ function useIsMobile() {
   return mobile;
 }
 
+function useIsNarrow(width: number) {
+  const [narrow, setNarrow] = useState(() => (typeof window !== "undefined" ? window.innerWidth < width : false));
+  useEffect(() => {
+    const check = () => setNarrow(window.innerWidth < width);
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, [width]);
+  return narrow;
+}
+
 /* ─── ScrambleText ──────────────────────────────────────── */
 /* Hovering a phrase scrambles it through random characters before
    resolving into a different string (a snippet of its body text), then
@@ -497,27 +507,33 @@ function TracedIcon({ Icon, size, hovered }: { Icon: IconComponent; size: number
 
 /* ─── ProjectCard ───────────────────────────────────────── */
 
-function ProjectCard({ project, side }: { project: Project; side: "left" | "right" }) {
+function ProjectCard({ project }: { project: Project }) {
   const [hovered, setHovered] = useState(false);
+  const compact = useIsNarrow(1280);
   const ProjectIcon = project.Icon;
 
-  // Right-aligned rows rest against the right edge and slide left as the
-  // details open up on the icon's right; left-aligned rows mirror that,
-  // sliding right as the details open up on the icon's left.
+  // Wide screens: the row rests toward the right and slides left as the
+  // details open up on the title's right. Narrower screens don't have the
+  // room for that, so the details open below the title instead.
   const details = (
     <div
-      style={{
-        maxWidth: hovered ? 360 : 0,
+      style={compact ? {
+        maxHeight: hovered ? 140 : 0,
+        opacity: hovered ? 1 : 0,
+        overflow: "hidden",
+        transition: "max-height 0.5s var(--ease-reveal), opacity 0.4s var(--ease-reveal)",
+      } : {
+        maxWidth: hovered ? 300 : 0,
         opacity: hovered ? 1 : 0,
         overflow: "hidden",
         flexShrink: 1,
         // Negative margin cancels the row's 16px gap while collapsed, so
         // the resting row has no phantom space beside the title.
-        [side === "left" ? "marginRight" : "marginLeft"]: hovered ? 0 : -16,
+        marginLeft: hovered ? 0 : -16,
         transition: "max-width 0.5s var(--ease-reveal), opacity 0.4s var(--ease-reveal), margin 0.5s var(--ease-reveal)",
       }}
     >
-      <div style={{ width: 340, textAlign: "left", ...(side === "left" ? { paddingRight: 8 } : { paddingLeft: 8 }) }}>
+      <div style={compact ? { width: 300, maxWidth: "100%", marginLeft: "auto", textAlign: "right", paddingTop: 2 } : { minWidth: 170, textAlign: "left", paddingLeft: 8 }}>
         <p style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(14px, 1.75vw, 16px)", color: "#666", lineHeight: 1.5, margin: 0 }}>
           {project.description}
         </p>
@@ -535,36 +551,37 @@ function ProjectCard({ project, side }: { project: Project; side: "left" | "righ
       onMouseLeave={() => setHovered(false)}
       onClick={() => setHovered((v) => !v)}
     >
-      <div style={{ borderRadius: 20, padding: "12px 6px 9px", display: "flex", alignItems: "center", gap: 16, justifyContent: side === "right" ? "flex-end" : "flex-start" }}>
-        {side === "left" && details}
-        <div style={{ width: 68, height: 68, position: "relative", flexShrink: 0 }}>
-          <div style={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transform: hovered ? "scale(1.1)" : "scale(1)",
-            transition: "transform 0.4s cubic-bezier(.34,1.56,.64,1)",
-          }}>
-            <ProjectIcon size={49} color={`url(#icon-grad-${project.id})`} strokeWidth={1.8} />
-            <TracedIcon Icon={ProjectIcon} size={49} hovered={hovered} />
+      <div style={{ borderRadius: 20, padding: "12px 28px 9px 6px", display: "flex", flexDirection: compact ? "column" : "row", alignItems: compact ? "flex-end" : "center", gap: compact ? 4 : 16, justifyContent: "flex-end" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
+          <div style={{ width: 68, height: 68, position: "relative", flexShrink: 0 }}>
+            <div style={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transform: hovered ? "scale(1.1)" : "scale(1)",
+              transition: "transform 0.4s cubic-bezier(.34,1.56,.64,1)",
+            }}>
+              <ProjectIcon size={49} color={`url(#icon-grad-${project.id})`} strokeWidth={1.8} />
+              <TracedIcon Icon={ProjectIcon} size={49} hovered={hovered} />
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "baseline", columnGap: 14, rowGap: 4, flexWrap: "wrap" }}>
+            <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(23px, 2.5vw, 29px)", fontWeight: 600, color: "#111", lineHeight: 1.15 }}>
+              {project.name}
+            </span>
+            <span style={{ display: "inline-flex", gap: 10, alignSelf: "center" }}>
+              <a href={project.github} title="GitHub" target="_blank" rel="noopener noreferrer" style={{ display: "flex", color: "#222" }}>
+                <Github size={14} strokeWidth={2} />
+              </a>
+              <a href={project.live} title="Live" target="_blank" rel="noopener noreferrer" style={{ display: "flex", color: project.gradient.from }}>
+                <ArrowUpRight size={14} strokeWidth={2} />
+              </a>
+            </span>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "baseline", columnGap: 14, rowGap: 4, flexWrap: "wrap", flexShrink: 0 }}>
-          <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(23px, 2.5vw, 29px)", fontWeight: 600, color: "#111", lineHeight: 1.15 }}>
-            {project.name}
-          </span>
-          <span style={{ display: "inline-flex", gap: 10, alignSelf: "center" }}>
-            <a href={project.github} title="GitHub" target="_blank" rel="noopener noreferrer" style={{ display: "flex", color: "#222" }}>
-              <Github size={14} strokeWidth={2} />
-            </a>
-            <a href={project.live} title="Live" target="_blank" rel="noopener noreferrer" style={{ display: "flex", color: project.gradient.from }}>
-              <ArrowUpRight size={14} strokeWidth={2} />
-            </a>
-          </span>
-        </div>
-        {side === "right" && details}
+        {details}
       </div>
     </div>
   );
@@ -1721,11 +1738,11 @@ export default function App() {
             <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               {PROJECT_GROUPS.map((g, gi) => (
                 <RevealSection key={g.category} delay={80 + gi * 70}>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "16px", fontWeight: 500, color: "#888", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px", textAlign: gi % 2 === 0 ? "right" : "left" }}>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "16px", fontWeight: 500, color: "#888", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px", textAlign: "right" }}>
                     {g.label}
                   </p>
                   {projects.filter((p) => p.active && p.category === g.category).map((p) => (
-                    <ProjectCard key={p.id} project={p} side={gi % 2 === 0 ? "right" : "left"} />
+                    <ProjectCard key={p.id} project={p} />
                   ))}
                 </RevealSection>
               ))}
