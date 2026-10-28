@@ -581,7 +581,7 @@ function ProjectCard({ project }: { project: Project }) {
             transition: "transform 0.6s var(--ease-reveal)",
           }}
         >
-          <div style={{ width: 64.6, height: 64.6, position: "relative", flexShrink: 0 }}>
+          <div style={{ width: 60.7, height: 60.7, position: "relative", flexShrink: 0 }}>
             <div style={{
               width: "100%",
               height: "100%",
@@ -591,12 +591,12 @@ function ProjectCard({ project }: { project: Project }) {
               transform: hovered ? "scale(1.1)" : "scale(1)",
               transition: "transform 0.4s cubic-bezier(.34,1.56,.64,1)",
             }}>
-              <ProjectIcon size={46.5} color={`url(#icon-grad-${project.id})`} strokeWidth={1.8} />
-              <TracedIcon Icon={ProjectIcon} size={46.5} hovered={hovered} />
+              <ProjectIcon size={43.7} color={`url(#icon-grad-${project.id})`} strokeWidth={1.8} />
+              <TracedIcon Icon={ProjectIcon} size={43.7} hovered={hovered} />
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "baseline", columnGap: 14, rowGap: 4, flexWrap: "wrap" }}>
-            <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(21.85px, 2.375vw, 27.55px)", fontWeight: 600, color: "#111", lineHeight: 1.15 }}>
+            <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(20.5px, 2.23vw, 25.9px)", fontWeight: 600, color: "#111", lineHeight: 1.15 }}>
               {project.name}
             </span>
             <span style={{ display: "inline-flex", gap: 10, alignSelf: "center" }}>
@@ -1310,6 +1310,7 @@ const POSITIONING_QUADRANTS: { align: "start" | "end"; items: { label: string; t
       { label: "Product Thinking", tx: 0.65, ty: 0.32 },
       { label: "Communication", tx: 0.9, ty: 0.6 },
       { label: "Ownership", tx: 0.65, ty: 0.92 },
+      { label: "User Empathy", tx: 0.95, ty: 0.8 },
     ],
   },
   {
@@ -1327,7 +1328,6 @@ const POSITIONING_QUADRANTS: { align: "start" | "end"; items: { label: string; t
     align: "end",
     items: [
       { label: "Research", tx: 0.85, ty: 0.05 },
-      { label: "User Empathy", tx: 0.6, ty: 0.35 },
       { label: "Adaptability", tx: 0.9, ty: 0.65 },
       { label: "Cross-functional Thinking", tx: 0.65, ty: 0.95 },
     ],
@@ -1337,7 +1337,17 @@ const POSITIONING_QUADRANTS: { align: "start" | "end"; items: { label: string; t
 const POSITIONING_AXIS_LABEL_STYLE = { fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: "13px", letterSpacing: "0.08em", fill: "#111" } as const;
 const POSITIONING_POINT_LABEL_STYLE = { fontFamily: "'DM Mono', monospace", fontSize: "12px", fill: "#444" } as const;
 
+const POSITIONING_ROLES: { role: string; skills: string[] }[] = [
+  { role: "AI PM", skills: ["Intelligent Systems / AI", "Product Thinking", "Problem Framing", "User Empathy", "Research", "Communication", "Cross-functional Thinking"] },
+  { role: "Founder's Office", skills: ["Ownership", "Adaptability", "Problem Framing", "Cross-functional Thinking", "Communication", "Automation", "Research"] },
+  { role: "FDE", skills: ["Integrations", "APIs", "System Design", "Backend", "Communication", "User Empathy", "Intelligent Systems / AI", "Adaptability"] },
+  { role: "Product Engineer", skills: ["Backend", "APIs", "Product Thinking", "Ownership", "Testing", "DevOps", "User Empathy", "Microservices"] },
+];
+
 function PositioningGraph() {
+  const [activeRole, setActiveRole] = useState<string | null>(null);
+  const lastPointerType = useRef("mouse");
+  const activeSkills = POSITIONING_ROLES.find((r) => r.role === activeRole)?.skills ?? null;
   const axisX = 350;
   const axisTop = 30;
   const axisBottom = 490;
@@ -1353,6 +1363,7 @@ function PositioningGraph() {
   ];
 
   return (
+    <>
     <svg viewBox="0 0 700 540" style={{ width: "100%", maxWidth: "700px", height: "auto", overflow: "visible", display: "block", margin: "0 auto" }}>
       {/* horizontal axis — TECHNICAL / PRODUCT & HUMAN. Labels sit just
           inside the arrows (in the blank gap between the quadrant rows)
@@ -1378,15 +1389,46 @@ function PositioningGraph() {
           const x = bounds.x0 + p.tx * (bounds.x1 - bounds.x0);
           const y = bounds.y0 + p.ty * (bounds.y1 - bounds.y0);
           const color = POSITIONING_PALETTE[(qi * 3 + i) % POSITIONING_PALETTE.length];
+          const lit = activeSkills?.includes(p.label) ?? false;
+          const dim = activeSkills !== null && !lit;
           return (
-            <g key={p.label}>
-              <circle cx={x} cy={y} r={4} fill={color} />
-              <text x={x + labelDx} y={y + 4} style={POSITIONING_POINT_LABEL_STYLE} textAnchor={q.align}>{p.label}</text>
+            <g key={p.label} style={{ opacity: dim ? 0.18 : 1, transition: "opacity 0.25s ease" }}>
+              <circle cx={x} cy={y} r={lit ? 6 : 4} fill={color} style={{ transition: "r 0.25s ease" }} />
+              <text x={x + labelDx} y={y + 4} style={{ ...POSITIONING_POINT_LABEL_STYLE, fill: lit ? "#111" : "#444", fontWeight: lit ? 700 : 400 }} textAnchor={q.align}>{p.label}</text>
             </g>
           );
         });
       })}
     </svg>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "10px 14px", marginTop: 16 }}>
+        {POSITIONING_ROLES.map(({ role }) => (
+          <button
+            key={role}
+            type="button"
+            onPointerDown={(e) => { lastPointerType.current = e.pointerType; }}
+            onPointerEnter={(e) => { if (e.pointerType === "mouse") setActiveRole(role); }}
+            onPointerLeave={(e) => { if (e.pointerType === "mouse") setActiveRole(null); }}
+            onClick={() => setActiveRole((cur) => (lastPointerType.current === "mouse" ? role : cur === role ? null : role))}
+            onBlur={() => setActiveRole(null)}
+            style={{
+              fontFamily: "'Chakra Petch', sans-serif",
+              fontWeight: 600,
+              fontSize: 14,
+              letterSpacing: "0.04em",
+              padding: "8px 18px",
+              borderRadius: 999,
+              border: "1px solid #111",
+              background: activeRole === role ? "#111" : "transparent",
+              color: activeRole === role ? "#fff" : "#111",
+              cursor: "default",
+              transition: "background 0.2s ease, color 0.2s ease",
+            }}
+          >
+            {role}
+          </button>
+        ))}
+      </div>
+    </>
   );
 }
 
