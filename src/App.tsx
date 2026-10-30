@@ -39,16 +39,16 @@ interface Project {
 
 const projects: Project[] = [
   {
-    id: "python-project",
-    name: "Integrelli",           // TODO: replace with project name
-    tagline: "Analyze any python repo",           // TODO: replace
-    description: "Python repo analyzer",
+    id: "milieu",
+    name: "Milieu",
+    tagline: "Context continuity for engine",
+    description: "Context continuity engine",
     category: "problems",
-    stack: ["Next.js", "TypeScript", "Tailwind", "Zustand", "Zod"],
+    stack: ["Vercel"],
     gradient: { from: "#4facfe", to: "#ffd32a" },
     Icon: Puzzle,
-    github: "https://github.com/tansincognito/integrelli",                      // TODO: replace
-    live: "https://integrelli.vercel.app",                        // TODO: replace
+    github: "#",
+    live: "https://milieu-iota.vercel.app/login",
     active: true,
   },
   {
@@ -77,18 +77,30 @@ const projects: Project[] = [
     live: "https://inside-the-machine.vercel.app/",     // TODO: replace
     active: true,
   },
-  // TODO: replace graveyard placeholders with real shelved ideas
   {
-    id: "graveyard-1",
-    name: "Shelved Idea One",
-    tagline: "Parked for now",
-    description: "Short note on idea",
-    category: "graveyard",
-    stack: ["TBD"],
-    gradient: { from: "#9aa0a6", to: "#5f6368" },
-    Icon: Ghost,
+    id: "architect-dev",
+    name: "architect.dev",
+    tagline: "Vibe coding platform UI/UX",
+    description: "Vibe coding platform UI/UX",
+    category: "fun",
+    stack: ["Vercel", "vibe coded"],
+    gradient: { from: "#667eea", to: "#764ba2" },
+    Icon: Cog,
     github: "#",
-    live: "#",
+    live: "https://architectdev-lake.vercel.app/app",
+    active: true,
+  },
+  {
+    id: "integrelli",
+    name: "Integrelli",           // TODO: replace with project name
+    tagline: "Analyze any python repo",           // TODO: replace
+    description: "Python repo analyzer",
+    category: "graveyard",
+    stack: ["Next.js", "TypeScript", "Tailwind", "Zustand", "Zod"],
+    gradient: { from: "#4facfe", to: "#ffd32a" },
+    Icon: Ghost,
+    github: "https://github.com/tansincognito/integrelli",                      // TODO: replace
+    live: "https://integrelli.vercel.app",                        // TODO: replace
     active: true,
   },
 ];
@@ -96,13 +108,13 @@ const projects: Project[] = [
 const PROJECT_GROUPS: { category: ProjectCategory; label: string }[] = [
   { category: "problems", label: "Solving problems" },
   { category: "fun", label: "For fun" },
-  { category: "graveyard", label: "Graveyard ideas" },
+  { category: "graveyard", label: "Shelved ideas" },
 ];
 
 // TODO: replace with real articles
-const writings = [
-  { title: "Article title", href: "#" },
-];
+// const writings = [
+//   { title: "Article title", href: "#" },
+// ];
 
 const socials = [
   { icon: Linkedin, label: "LinkedIn", href: "https://www.linkedin.com/in/tansinha/" },
@@ -619,7 +631,8 @@ function ProjectCard({ project }: { project: Project }) {
 /* Hand-drawn scribble loop around a phrase that draws itself in once the
    phrase scrolls into view, and redraws whenever it's hovered. */
 
-function ScribbleText({ children }: { children: React.ReactNode }) {
+// Unused while the Writings section is commented out.
+export function ScribbleText({ children }: { children: React.ReactNode }) {
   const { ref, visible } = useReveal();
   const [drawKey, setDrawKey] = useState(0);
   return (
@@ -1474,12 +1487,12 @@ function AgentModePage() {
         ))}
       </ul>
 
-      <h2 style={AGENT_SECTION_STYLE}>Writings</h2>
+      {/* <h2 style={AGENT_SECTION_STYLE}>Writings</h2>
       <ul style={AGENT_LIST_STYLE}>
         {writings.map((w) => (
           <li key={w.title}><a href={w.href}>{w.title}</a></li>
         ))}
-      </ul>
+      </ul> */}
 
       <h2 style={AGENT_SECTION_STYLE}>Experience</h2>
       <ul style={AGENT_LIST_STYLE}>
@@ -1983,6 +1996,7 @@ export default function App() {
             <WireframeBrain />
           </Suspense>
         </RevealSection>
+        {/*
         <div style={{ marginTop: "72px", ...(isMobile ? { display: "flex", flexDirection: "column", gap: "24px" } : { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "56px", alignItems: "stretch" }) }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
             <ScribbleText>
@@ -2018,6 +2032,7 @@ export default function App() {
             ))}
           </div>
         </div>
+        */}
       </section>
 
       {/* ── Closing line ── */}
