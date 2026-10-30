@@ -1031,8 +1031,8 @@ const resumeData = {
   name: "Tanishaa Sinha",
   title: "Software Engineer", // TODO: confirm tagline
   experience: [
-    { role: "Software Engineer II", org: "Dell Technologies", period: "Aug'24 — Current", blurb: "Built and deployed enterprise grade microservices , automation scripts , and lots of errors." }, // TODO: replace with real role
-    { role: "Winter/Summer Intern", org: "Dell Technologies", period: "May '23 — May '24", blurb: "Analysed data for 300k+ orders , automated testing and had a lot of coffee chats/TT sessions" }, // TODO: replace with real role
+    { role: "Software Engineer II", org: "Dell Technologies", period: "Aug'24 — Current", blurb: "Built and deployed enterprise grade microservices , debugged till 2 AM and developed a love/hate relationship with coding assistants " }, // TODO: replace with real role
+    { role: "Winter/Summer Intern", org: "Dell Technologies", period: "May '23 — May '24", blurb: "Analysed data discrepancies for 300k+ orders globally , automated testing and had a lot of coffee chats/TT sessions" }, // TODO: replace with real role
     { role: "Writing & Editorial Freelancer", org: "Markovate", period: "May '22— July '22", blurb: "Explored writing technical articles " }, // TODO: replace with real role
   ],
   skills: [
@@ -1988,7 +1988,7 @@ export default function App() {
         </div>
         <RevealSection>
           <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "22px", fontWeight: 600, color: "#bbb", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: "56px", marginBottom: "20px" }}>
-            How do I think
+            How I think
           </p>
         </RevealSection>
         <RevealSection delay={70}>
