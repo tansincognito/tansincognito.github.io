@@ -5,6 +5,7 @@ import {
   Linkedin,
   Mail,
   ArrowUpRight,
+  Download,
   Laptop,
   Briefcase,
   Cog,
@@ -1027,6 +1028,10 @@ function TypewriterLines({ lines, startDelay = 0, fontSize = "clamp(13px, 1.6vw,
 
 type ScanStatus = "idle" | "scanning" | "flash" | "complete";
 
+// Replace public/resume.pdf with your actual résumé (keep the filename, or update this path).
+const RESUME_PDF_PATH = "/resume.pdf";
+const RESUME_PDF_FILENAME = "Tanishaa-Sinha-Resume.pdf";
+
 const resumeData = {
   name: "Tanishaa Sinha",
   title: "Software Engineer", // TODO: confirm tagline
@@ -1194,9 +1199,20 @@ function ResumeScanner({ scale = 1 }: { scale?: number }) {
           <div key={runId} style={{ display: "flex", flexDirection: "column", gap: "22px" }}>
             <Reveal delay={0}>
               <div>
-                <h3 style={{ fontFamily: "'Instrument Serif', serif", fontSize: "clamp(32px, 4vw, 46px)", fontWeight: 400, color: "#111", marginBottom: "6px" }}>
-                  {resumeData.name}
-                </h3>
+                <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", columnGap: "16px", rowGap: "8px", marginBottom: "6px" }}>
+                  <h3 style={{ fontFamily: "'Instrument Serif', serif", fontSize: "clamp(32px, 4vw, 46px)", fontWeight: 400, color: "#111" }}>
+                    {resumeData.name}
+                  </h3>
+                  <a
+                    href={RESUME_PDF_PATH}
+                    download={RESUME_PDF_FILENAME}
+                    className="resume-download-btn"
+                    style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontFamily: "'DM Mono', monospace", fontSize: "12px", color: "#111", border: "1px solid #111", borderRadius: "999px", padding: "6px 14px", textDecoration: "none" }}
+                  >
+                    <Download size={14} strokeWidth={2} />
+                    Download résumé
+                  </a>
+                </div>
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "13px", color: "#888" }}>{resumeData.title}</p>
               </div>
             </Reveal>
@@ -1589,6 +1605,8 @@ export default function App() {
           transition: color var(--dur-micro) var(--ease-response);
         }
         .nav-icon:hover { color: #111; }
+        .resume-download-btn { transition: background var(--dur-micro) var(--ease-response), color var(--dur-micro) var(--ease-response); }
+        .resume-download-btn:hover { background: #111; color: #fff !important; }
         @keyframes blink {
           0%, 100% { opacity: 1; }
           50% { opacity: 0; }
