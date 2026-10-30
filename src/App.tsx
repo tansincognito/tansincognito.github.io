@@ -61,7 +61,7 @@ const projects: Project[] = [
     gradient: { from: "#11998e", to: "#38ef7d" },
     Icon: Briefcase,
     github: "https://github.com/tan-sinha/TripSynce",                      // TODO: replace
-    live: "#",                        // TODO: replace
+    live: "https://tripsynce.vercel.app/itinerary",                        // TODO: replace
     active: true,
   },
   {
