@@ -1407,7 +1407,7 @@ function PositioningGraph() {
           return (
             <g key={p.label} style={{ opacity: dim ? 0.18 : 1, transition: "opacity 0.25s ease" }}>
               <circle cx={x} cy={y} r={lit ? 6 : 4} fill={color} style={{ transition: "r 0.25s ease" }} />
-              <text x={x + labelDx} y={y + 4} style={{ ...POSITIONING_POINT_LABEL_STYLE, fill: lit ? "#111" : "#444", fontWeight: lit ? 700 : 400 }} textAnchor={q.align}>{p.label}</text>
+              <text x={x + labelDx} y={y + 4} style={{ ...POSITIONING_POINT_LABEL_STYLE, fill: lit ? "#111" : "#444", fontWeight: lit ? 500 : 400 }} textAnchor={q.align}>{p.label}</text>
             </g>
           );
         });
