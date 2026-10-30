@@ -93,8 +93,8 @@ const projects: Project[] = [
   {
     id: "integrelli",
     name: "Integrelli",           // TODO: replace with project name
-    tagline: "Analyze any python repo",           // TODO: replace
-    description: "Python repo analyzer",
+    tagline: "Analyze any workflows with multiple API calls",           // TODO: replace
+    description: "Integration aggregator analyzer",
     category: "graveyard",
     stack: ["Next.js", "TypeScript", "Tailwind", "Zustand", "Zod"],
     gradient: { from: "#4facfe", to: "#ffd32a" },
